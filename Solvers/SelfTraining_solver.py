@@ -1,12 +1,9 @@
-import numpy as np
 from Solvers.Solver_Base import Solver_Base
-import torch
 from Models.model import Conv2DModel
-import torch.nn.functional as F
 import torch.nn as nn
 import torch.optim as optim
 
-class Standard_solver(Solver_Base):
+class SelfTraining_solver(Solver_Base):
     
     def __init__(self, cfg_proj, cfg_m, name = "Std"):
         Solver_Base.__init__(self, cfg_proj, cfg_m, name)
