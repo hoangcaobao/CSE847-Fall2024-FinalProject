@@ -10,6 +10,9 @@ class Solver_Base:
         self.cfg_proj = cfg_proj
         self.cfg_m = cfg_m
 
+        use_cuda = torch.cuda.is_available()
+        self.device = torch.device("cuda" if use_cuda else "cpu")
+
     def eval_func(self, model, test_loader):
         # Testing loop
         model.eval()
@@ -17,6 +20,8 @@ class Solver_Base:
             correct = 0
             total = 0
             for images, labels in test_loader:
+                images, labels = images.to(self.device), labels.to(self.device)
+
                 outputs = model(images)
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
@@ -45,14 +50,22 @@ class Solver_Base:
         # torch.backends.cudnn.benchmark = False
         self.seed_current = seed
 
-    def predict(self, model, X, flag_prob = False):
+    def predict(self, model, X):
         pass 
 
-    def predict_proba(self, model, X, flag_prob = True):
-        pass
-    
+    def predict_proba(self, model, X):
+
+        model.eval()
+        with torch.no_grad():
+            X = X.float().to(self.device)
+            pred = model(X)
+            pred = torch.nn.functional.softmax(pred, dim = 1)
+        
+        return pred.detach().cpu().numpy()   
+      
     def basic_train(self, model, dataloader_train, criterion, optimizer):
         
+        model = model.to(self.device)
         # Training loop with validation
         for epoch in range(self.cfg_m.training.epochs):
             model.train()
@@ -61,6 +74,8 @@ class Solver_Base:
 
             for images, labels in dataloader_train:
                 # Forward pass
+                images, labels = images.to(self.device), labels.to(self.device)
+
                 outputs = model(images)
                 loss = criterion(outputs, labels)
 

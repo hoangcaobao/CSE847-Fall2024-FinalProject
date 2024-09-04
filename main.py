@@ -19,7 +19,9 @@ if __name__ == "__main__":
     parser.add_argument("--gpu", type=str, default="3", required=False)
     parser.add_argument("--seed", type=int, default = 42, required=False) 
     parser.add_argument("--dataset_name", type = str, default="CIFAR10", required=False)
-    parser.add_argument("--solver", type = str, default = "Standard_solver", required=False)
+
+    # Standard_solver, SelfTraining_solver
+    parser.add_argument("--solver", type = str, default = "SelfTraining_solver", required=False) 
 
     cfg_proj = parser.parse_args()
     cfg_m = init_cfg(cfg_proj)
