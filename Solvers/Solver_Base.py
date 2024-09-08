@@ -46,8 +46,9 @@ class Solver_Base:
             if torch.cuda.device_count() > 1: torch.cuda.manual_seed_all(seed)
         np.random.seed(seed)
         random.seed(seed)
-        # torch.backends.cudnn.deterministic = True
-        # torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
         self.seed_current = seed
 
     def predict(self, model, X):
@@ -86,7 +87,8 @@ class Solver_Base:
                 loss.backward()
                 optimizer.step()
 
-            print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}')
+            if epoch % 25 == 0:
+                print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}')
 
         return model
     

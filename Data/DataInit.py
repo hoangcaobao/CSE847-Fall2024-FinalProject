@@ -26,3 +26,9 @@ def data_init(cfg_proj, cfg_m):
     test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
     
     return train_labeled_loader, train_unlabeled_loader, test_loader
+
+
+    # train_labeled_loader = DataLoader(dataset=train_dataset, batch_size=cfg_m.training.batch_size, shuffle=True)
+    # test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
+    
+    # return train_labeled_loader, train_unlabeled_loader, test_loader
