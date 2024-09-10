@@ -1,6 +1,6 @@
 from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
-from Data.Manh_preprocessing import get_cifar10
+from Data.DataPreProcessing import get_cifar10
 import argparse
 
 

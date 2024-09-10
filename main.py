@@ -20,7 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default = 42, required=False) 
     parser.add_argument("--dataset_name", type = str, default="CIFAR10", required=False)
 
-    # Standard_solver, SelfTraining_solver
+    # Standard_solver, SelfTraining_solver, FixMatch_solver
     parser.add_argument("--solver", type = str, default = "FixMatch_solver", required=False) 
 
     cfg_proj = parser.parse_args()

@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim 
 import torch 
 import numpy as np 
-from Data.Manh_preprocessing import get_cifar10
+from Data.DataPreProcessing import get_cifar10
 from torch.utils.data import TensorDataset, DataLoader, random_split 
 from tqdm import tqdm
  
@@ -80,6 +80,3 @@ class FixMatch_solver(Solver_Base):
             print(acc)
         
         return model
-            
-            
-# if __name__ == "__main__":
