@@ -1,5 +1,7 @@
 from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
+from Data.Manh_preprocessing import get_cifar10
+import argparse
 
 
 def data_init(cfg_proj, cfg_m):
@@ -24,5 +26,19 @@ def data_init(cfg_proj, cfg_m):
     train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True)
     train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
     test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
+    
+    if cfg_proj.solver == "FixMatch_solver":
+        args = {
+            "num_labeled": 5000,
+            "num_classes": 10,
+            "batch_size": cfg_m.training.batch_size,
+        }
+        args = argparse.Namespace(**args)
+        train_labeled_dataset, train_unlabeled_dataset, test_dataset = get_cifar10(args, './data')
+        
+        train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True)
+        train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=8 * cfg_m.training.batch_size, shuffle=False)
+        test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
+    
     
     return train_labeled_loader, train_unlabeled_loader, test_loader
