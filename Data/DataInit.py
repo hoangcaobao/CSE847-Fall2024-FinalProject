@@ -6,6 +6,9 @@ from sklearn.model_selection import train_test_split
 
 def data_init(cfg_proj, cfg_m):
 
+    cifar10_mean = (0.4914, 0.4822, 0.4465)
+    cifar10_std = (0.2471, 0.2435, 0.2616)
+    
     if cfg_proj.dataset_name == "MNIST":
         # MNIST dataset
         transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
@@ -13,7 +16,7 @@ def data_init(cfg_proj, cfg_m):
         test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, download=True)
 
     if cfg_proj.dataset_name == "CIFAR10":
-        transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=cifar10_mean, std=cifar10_std)])
         train_dataset = datasets.CIFAR10(root='./data', train=True, transform=transform, download=True)
         test_dataset = datasets.CIFAR10(root='./data', train=False, transform=transform, download=True)
 
@@ -24,9 +27,6 @@ def data_init(cfg_proj, cfg_m):
     test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
     
     if cfg_proj.solver == "FixMatch_solver":
-        cifar10_mean = (0.4914, 0.4822, 0.4465)
-        cifar10_std = (0.2471, 0.2435, 0.2616)
-        
         transform_labeled = transforms.Compose([
             transforms.RandomHorizontalFlip(),
             transforms.RandomCrop(size=32,
