@@ -13,7 +13,7 @@ def init_cfg(cfg_proj):
     else:
         config.data.in_channels = 3
 
-    if n_solver in ["Standard_solver", "SelfTraining_solver"]:
+    if n_solver in ["Standard_solver", "SelfTraining_solver", "MeanTeachers_solver"]:
         config.training.epochs = 50
         config.training.batch_size = 512
         config.training.lr_init = 1.0e-3

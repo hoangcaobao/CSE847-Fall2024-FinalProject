@@ -26,6 +26,11 @@ def data_init(cfg_proj, cfg_m):
     train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
     test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
     
+    # GOLDEN BASELINE
+    # train_labeled_loader = DataLoader(dataset=train_dataset, batch_size=cfg_m.training.batch_size, shuffle=True)
+    # train_unlabeled_loader = None
+    # test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
+
     if cfg_proj.solver == "FixMatch_solver":
         transform_labeled = transforms.Compose([
             transforms.RandomHorizontalFlip(),
