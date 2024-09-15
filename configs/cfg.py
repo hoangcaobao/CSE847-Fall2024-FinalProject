@@ -18,5 +18,8 @@ def init_cfg(cfg_proj):
         config.training.batch_size = 512
         config.training.lr_init = 1.0e-3
         config.training.tol = 1e-4
-   
+    
+    if n_solver in ["MeanTeachers_solver"]:
+        config.training.epochs = 10 
+
     return config

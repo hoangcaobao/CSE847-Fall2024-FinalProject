@@ -82,8 +82,7 @@ class MeanTeachers_solver(Solver_Base):
                 # Update teacher model weights with EMA
                 for student_param, teacher_param in zip(student_model.parameters(), teacher_model.parameters()):
                     teacher_param.data = alpha * teacher_param.data + (1 - alpha) * student_param.data
-               
-            if epoch % 25 == 0:
-                print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}')
+            
+            print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}')
 
         return teacher_model
