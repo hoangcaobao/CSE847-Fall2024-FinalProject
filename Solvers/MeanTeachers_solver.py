@@ -21,7 +21,7 @@ class MeanTeachers_solver(Solver_Base):
 
         return acc
 
-    def train(self, train_labeled_loader, train_unlabeled_loader, test_loader, alpha = 0.95):
+    def train(self, train_labeled_loader, train_unlabeled_loader, test_loader, alpha = 0.99):
         teacher_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels)
         student_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels)
 
@@ -77,6 +77,6 @@ class MeanTeachers_solver(Solver_Base):
                 for student_param, teacher_param in zip(student_model.parameters(), teacher_model.parameters()):
                     teacher_param.data = alpha * teacher_param.data + (1 - alpha) * student_param.data
             
-            print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}, Accuracy: {self.eval_func(student_model, test_loader)}')
+            print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}, Accuracy: {self.eval_func(teacher_model, test_loader)}')
 
         return teacher_model
