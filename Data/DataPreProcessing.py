@@ -125,13 +125,12 @@ class CustomDataset(Dataset):
         if image.dtype != np.uint8:
             image = (image * 255).astype(np.uint8)
             
-        image = Image.fromarray(image)
+        if isinstance(image, np.ndarray):    
+            image = Image.fromarray(image)
+            
         if self.transform:
             image = self.transform(image)
         return image, target
-    
-
-
     
 class TransformTwice:
     def __init__(self, transform):
@@ -141,39 +140,3 @@ class TransformTwice:
         out1 = self.transform(inp)
         out2 = self.transform(inp)
         return out1, out2
-    
-    
-def pad(x, border=4):
-    return np.pad(x, [(0, 0), (border, border), (border, border)], mode='reflect')
-
-class RandomPadandCrop(object):
-    def __init__(self, output_size):
-        assert isinstance(output_size, (int, tuple))
-        if isinstance(output_size, int):
-            self.output_size = (output_size, output_size)
-        else:
-            assert len(output_size) == 2
-            self.output_size = output_size
-
-    def __call__(self, x):
-        x = pad(x, 4)
-
-        h, w = x.shape[1:]
-        new_h, new_w = self.output_size
-
-        top = np.random.randint(0, h - new_h)
-        left = np.random.randint(0, w - new_w)
-
-        x = x[:, top: top + new_h, left: left + new_w]
-        
-class RandomFlip(object):
-    def __call__(self, x):
-        if np.random.rand() < 0.5:
-            x = x[:, :, ::-1]
-
-        return x.copy()
-    
-class ToTensor(object):
-    def __call__(self, x):
-        x = torch.from_numpy(x)
-        return x

@@ -5,6 +5,8 @@ from Solvers.Standard_solver import Standard_solver
 from Solvers.SelfTraining_solver import SelfTraining_solver
 from Solvers.FixMatch_solver import FixMatch_solver
 from Solvers.MeanTeachers_solver import MeanTeachers_solver
+from Solvers.MixMatch_solver import MixMatch_solver
+
 def solver_loader(cfg_proj, cfg_m):
     s = None
     if cfg_proj.solver == "Standard_solver":
@@ -15,5 +17,7 @@ def solver_loader(cfg_proj, cfg_m):
         s = FixMatch_solver(cfg_proj, cfg_m)
     if cfg_proj.solver == "MeanTeachers_solver":
         s = MeanTeachers_solver(cfg_proj, cfg_m)
+    if cfg_proj.solver == "MixMatch_solver":
+        s = MixMatch_solver(cfg_proj, cfg_m)
     return s
 
