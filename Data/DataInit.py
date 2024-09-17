@@ -34,8 +34,8 @@ def data_init(cfg_proj, cfg_m):
             transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
         ])
     
-
-
+    train_labeled_dataset, train_unlabeled_dataset = train_test_split(train_dataset, test_size=0.9, stratify=train_dataset.targets)
+    
     # GOLDEN BASELINE
     if cfg_proj.golden_baseline: 
         train_labeled_dataset = CustomDataset(train_dataset, transform=transform_train)
@@ -64,8 +64,6 @@ def data_init(cfg_proj, cfg_m):
         test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
 
     else:
-        train_labeled_dataset, train_unlabeled_dataset = train_test_split(train_dataset, test_size=0.9, stratify=train_dataset.targets)
-    
         train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
         train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=transform_train)
         test_dataset = CustomDataset(test_dataset, transform=transform_val)

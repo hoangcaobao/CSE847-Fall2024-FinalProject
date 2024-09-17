@@ -22,20 +22,21 @@ class SelfTraining_solver(Solver_Base):
         return acc
 
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader):
-        images_labeled_dataset = []
-        labels_labeled_dataset = []
-        original_labeled_dataset = []
+        print(train_labeled_loader.dataset.dataset.dataset)
+        # images_labeled_dataset = []
+        # labels_labeled_dataset = []
+        # original_labeled_dataset = []
         
-        for images, labels in train_labeled_loader:
-            images_labeled_dataset.append(images)
-            labels_labeled_dataset.append(labels)
-            original_labeled_dataset.append(torch.tensor([1 for _ in range(images.shape[0])]))
+        # for images, labels in train_labeled_loader:
+        #     images_labeled_dataset.append(images)
+        #     labels_labeled_dataset.append(labels)
+        #     original_labeled_dataset.append(torch.tensor([1 for _ in range(images.shape[0])]))
 
-        images_labeled_dataset = torch.cat(images_labeled_dataset, dim = 0)
-        labels_labeled_dataset = torch.cat(labels_labeled_dataset, dim = 0)  
-        original_labeled_dataset = torch.cat(original_labeled_dataset, dim = 0) 
+        # images_labeled_dataset = torch.cat(images_labeled_dataset, dim = 0)
+        # labels_labeled_dataset = torch.cat(labels_labeled_dataset, dim = 0)  
+        # original_labeled_dataset = torch.cat(original_labeled_dataset, dim = 0) 
 
-        train_labeled_loader = DataLoader(dataset=TensorDataset(images_labeled_dataset, labels_labeled_dataset, original_labeled_dataset), batch_size=self.cfg_m.training.batch_size, shuffle=True)
+        # train_labeled_loader = DataLoader(dataset=CustomTensorDataset(images_labeled_dataset, labels_labeled_dataset, original_labeled_dataset), batch_size=self.cfg_m.training.batch_size, shuffle=False)
 
         for _ in range(10):
             model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels)
@@ -47,6 +48,8 @@ class SelfTraining_solver(Solver_Base):
             model = self.basic_train(model, train_labeled_loader, criterion, optimizer)
 
             model.eval()
+
+            print(f"Test performance: {self.eval_func(model, test_loader)}")
 
             images_labeled_dataset = []
             labels_labeled_dataset = []
@@ -88,8 +91,6 @@ class SelfTraining_solver(Solver_Base):
             train_labeled_loader = DataLoader(dataset=TensorDataset(images_labeled_dataset, labels_labeled_dataset, original_labeled_dataset), batch_size=self.cfg_m.training.batch_size, shuffle=True)
             train_unlabeled_loader = DataLoader(dataset=TensorDataset(images_unlabeled_dataset, labels_unlabeled_dataset), batch_size=self.cfg_m.training.batch_size, shuffle=False)
 
-            print(f"Test performance: {self.eval_func(model, test_loader)}")
-            
         return model
 
     def basic_train(self, model, dataloader_train, criterion, optimizer):
@@ -103,18 +104,21 @@ class SelfTraining_solver(Solver_Base):
 
             for images, labels, original in dataloader_train:
                 # Forward pass
-                images, labels, original = images.to(self.device), labels.to(self.device), original.to(self.device)
+                images, labels, original = images.float().to(self.device), labels.to(self.device), original.to(self.device)
 
-                outputs = model(images)
                 loss = 0
 
                 # Compute the loss for original labeled dataset
                 if torch.any(original == 1):
-                    loss += criterion(outputs[original == 1], labels[original == 1])
+                    outputs = model(images[original == 1])
+                    labels1 = labels[original == 1]
+                    loss += criterion(outputs, labels1)
 
                 # Compute the loss for pseudo labeled dataset
                 if torch.any(original == 0):
-                    loss += 0.2 * criterion(outputs[original == 0], labels[original == 0])
+                    outputs = model(images[original == 0])
+                    labels0 = labels[original == 0]
+                    loss += 0.2 * criterion(outputs, labels0)
                 
                 epoch_loss.append(loss.item())
 

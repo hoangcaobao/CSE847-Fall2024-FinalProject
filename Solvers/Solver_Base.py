@@ -64,7 +64,7 @@ class Solver_Base:
         
         return pred.detach().cpu().numpy()   
       
-    def basic_train(self, model, dataloader_train, criterion, optimizer):
+    def basic_train(self, model, dataloader_train, criterion, optimizer, test_loader):
         
         model = model.to(self.device)
         # Training loop with validation
@@ -88,7 +88,7 @@ class Solver_Base:
                 optimizer.step()
 
             if epoch % 25 == 0:
-                print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}')
+                print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}, Accuracy: {self.eval_func(model, test_loader)}')
 
         return model
     
