@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser.add_argument("--gpu", type=str, default="1", required=False)
     parser.add_argument("--seed", type=int, default = 42, required=False) 
     parser.add_argument("--dataset_name", type = str, default="CIFAR10", required=False)
-    parser.add_argument("-golden_baseline", type = bool, default=True, required=False)
+    parser.add_argument("-golden_baseline", type = bool, default=False, required=False)
 
     # Standard_solver, SelfTraining_solver, FixMatch_solver, MeanTeachers_solver, MixMatch_solver
     parser.add_argument("--solver", type = str, default = "Standard_solver", required=False) 
