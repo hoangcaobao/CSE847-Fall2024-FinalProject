@@ -34,15 +34,7 @@ def data_init(cfg_proj, cfg_m):
             transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
         ])
     
-    train_labeled_dataset, train_unlabeled_dataset = train_test_split(train_dataset, test_size=0.9, stratify=train_dataset.targets)
-    
-    train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
-    train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=transform_train)
-    test_dataset = CustomDataset(test_dataset, transform=transform_val)
-    
-    train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
-    train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
-    test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
+
 
     # GOLDEN BASELINE
     if cfg_proj.golden_baseline: 
@@ -53,7 +45,7 @@ def data_init(cfg_proj, cfg_m):
         train_unlabeled_loader = None
         test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
 
-    if cfg_proj.solver == "FixMatch_solver":
+    elif cfg_proj.solver == "FixMatch_solver":
         train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
         train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformFixMatch(mean=cifar10_mean, std=cifar10_std))
         test_dataset = CustomDataset(test_dataset, transform=transform_val)
@@ -62,7 +54,7 @@ def data_init(cfg_proj, cfg_m):
         train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=8 * cfg_m.training.batch_size, shuffle=False)
         test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
         
-    if cfg_proj.solver == "MixMatch_solver":
+    elif cfg_proj.solver == "MixMatch_solver":
         train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
         train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformTwice(transform_train))
         test_dataset = CustomDataset(test_dataset, transform=transform_val)
@@ -71,5 +63,14 @@ def data_init(cfg_proj, cfg_m):
         train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=True)
         test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
 
+    else:
+        train_labeled_dataset, train_unlabeled_dataset = train_test_split(train_dataset, test_size=0.9, stratify=train_dataset.targets)
     
+        train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
+        train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=transform_train)
+        test_dataset = CustomDataset(test_dataset, transform=transform_val)
+        
+        train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
+        train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
+        test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
     return train_labeled_loader, train_unlabeled_loader, test_loader
