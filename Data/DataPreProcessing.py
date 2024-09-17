@@ -131,6 +131,33 @@ class CustomDataset(Dataset):
         if self.transform:
             image = self.transform(image)
         return image, target
+
+class CustomDatasetSelfTraining(Dataset):
+    def __init__(self, dataset, transform=None):
+        self.dataset = dataset
+        self.transform = transform 
+        
+    def __len__(self):
+        return len(self.dataset)
+    
+    def __getitem__(self, idx):
+        image = self.dataset[idx]
+        if isinstance(image, torch.Tensor):
+            image = image.numpy()
+            
+        if image.shape == (3, 32, 32):
+            image = np.transpose(image, (1, 2, 0))
+            
+        if image.dtype != np.uint8:
+            image = (image * 255).astype(np.uint8)
+            
+        if isinstance(image, np.ndarray):    
+            image_transform = Image.fromarray(image)
+            
+        if self.transform:
+            image_transform = self.transform(image_transform)
+
+        return image, image_transform
     
 class TransformTwice:
     def __init__(self, transform):

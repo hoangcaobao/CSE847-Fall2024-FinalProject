@@ -5,6 +5,24 @@ import torch.optim as optim
 import torch
 import numpy as np
 from torch.utils.data import TensorDataset, DataLoader, random_split
+from Data.DataPreProcessing import CustomDataset, CustomDatasetSelfTraining
+from tqdm import tqdm
+from torchvision import datasets, transforms
+
+cifar10_mean = (0.4914, 0.4822, 0.4465)
+cifar10_std = (0.2471, 0.2435, 0.2616)
+transform_val = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
+])
+transform_train = transforms.Compose([
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomCrop(size=32,
+                        padding=int(32*0.125),
+                        padding_mode='reflect'),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
+])
 
 class SelfTraining_solver(Solver_Base):
     
@@ -22,22 +40,14 @@ class SelfTraining_solver(Solver_Base):
         return acc
 
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader):
-        print(train_labeled_loader.dataset.dataset.dataset)
-        # images_labeled_dataset = []
-        # labels_labeled_dataset = []
-        # original_labeled_dataset = []
+        unlabeled_imgs = [item[0] for item in train_labeled_loader.dataset.dataset[:]]
+        unlabeled_imgs = torch.stack(unlabeled_imgs)
+
+        pseudo_imgs = []
+        pseudo_labels = []
+
+        train_pseudo_labeled_loader = None
         
-        # for images, labels in train_labeled_loader:
-        #     images_labeled_dataset.append(images)
-        #     labels_labeled_dataset.append(labels)
-        #     original_labeled_dataset.append(torch.tensor([1 for _ in range(images.shape[0])]))
-
-        # images_labeled_dataset = torch.cat(images_labeled_dataset, dim = 0)
-        # labels_labeled_dataset = torch.cat(labels_labeled_dataset, dim = 0)  
-        # original_labeled_dataset = torch.cat(original_labeled_dataset, dim = 0) 
-
-        # train_labeled_loader = DataLoader(dataset=CustomTensorDataset(images_labeled_dataset, labels_labeled_dataset, original_labeled_dataset), batch_size=self.cfg_m.training.batch_size, shuffle=False)
-
         for _ in range(10):
             model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels)
             criterion = nn.CrossEntropyLoss()
@@ -45,80 +55,83 @@ class SelfTraining_solver(Solver_Base):
 
             model.train()
 
-            model = self.basic_train(model, train_labeled_loader, criterion, optimizer)
+            model = self.basic_train(model, train_labeled_loader, train_pseudo_labeled_loader, criterion, optimizer)
 
             model.eval()
 
             print(f"Test performance: {self.eval_func(model, test_loader)}")
 
-            images_labeled_dataset = []
-            labels_labeled_dataset = []
-            original_labeled_dataset = []
+            train_unlabeled_loader = DataLoader(dataset=CustomDatasetSelfTraining(unlabeled_imgs, transform=transform_val), batch_size=self.cfg_m.training.batch_size, shuffle=True, drop_last=False)
+            unlabeled_imgs = []
 
-            images_unlabeled_dataset = []
-            labels_unlabeled_dataset = []
-
-            for images, labels, original in train_labeled_loader:
-                images_labeled_dataset.append(images)
-                labels_labeled_dataset.append(labels)
-                original_labeled_dataset.append(original)
+            if len(pseudo_imgs):
+                pseudo_imgs = [pseudo_imgs]
+                pseudo_labels = [pseudo_labels]
 
             with torch.no_grad():
-                for images, l in train_unlabeled_loader:
+                for original_images, images in train_unlabeled_loader:
                     outputs = model(images.to(self.device))
                     outputs = torch.nn.functional.softmax(outputs, dim = 1).detach().cpu()
                     outputs, labels = torch.max(outputs.data, 1)
                     
                     # choose most confidence one
-                    index = outputs >= 0.999
+                    index = outputs >= 0.8
 
-                    images_labeled_dataset.append(images[index])
-                    labels_labeled_dataset.append(labels[index])
-                    original_labeled_dataset.append(torch.tensor([0 for _ in range(index.sum())]))
+                    pseudo_imgs.append(original_images[index])
+                    pseudo_labels.append(labels[index])
 
-                    images_unlabeled_dataset.append(images[~index])
-                    labels_unlabeled_dataset.append(labels[~index])
+                    unlabeled_imgs.append(original_images[~index])
                 
-            images_labeled_dataset = torch.cat(images_labeled_dataset, dim = 0)
-            labels_labeled_dataset = torch.cat(labels_labeled_dataset, dim = 0)    
-            original_labeled_dataset = torch.cat(original_labeled_dataset, dim = 0) 
+            pseudo_imgs = torch.cat(pseudo_imgs, dim = 0)
+            pseudo_labels = torch.cat(pseudo_labels, dim = 0)    
 
-            print(f"Number of labeled data: {images_labeled_dataset.shape[0]}")
+            print(f"Number of pseudo labeled data: {pseudo_imgs.shape[0]}")
 
-            images_unlabeled_dataset = torch.cat(images_unlabeled_dataset, dim = 0)
-            labels_unlabeled_dataset = torch.cat(labels_unlabeled_dataset, dim = 0)   
+            unlabeled_imgs = torch.cat(unlabeled_imgs, dim = 0)
             
-            train_labeled_loader = DataLoader(dataset=TensorDataset(images_labeled_dataset, labels_labeled_dataset, original_labeled_dataset), batch_size=self.cfg_m.training.batch_size, shuffle=True)
-            train_unlabeled_loader = DataLoader(dataset=TensorDataset(images_unlabeled_dataset, labels_unlabeled_dataset), batch_size=self.cfg_m.training.batch_size, shuffle=False)
+            train_pseudo_labeled_loader =  DataLoader(dataset=CustomDataset(TensorDataset(pseudo_imgs, pseudo_labels), transform=transform_train), batch_size=self.cfg_m.training.batch_size, shuffle=True, drop_last=False)
 
         return model
 
-    def basic_train(self, model, dataloader_train, criterion, optimizer):
+    def basic_train(self, model, train_labeled_loader, train_pseudo_labeled_loader, criterion, optimizer):
         
         model = model.to(self.device)
         # Training loop with validation
+
+        labeled_iter = iter(train_labeled_loader)
+        if train_pseudo_labeled_loader:
+            unlabeled_iter = iter(train_pseudo_labeled_loader)
+
         for epoch in range(self.cfg_m.training.epochs):
             model.train()
 
             epoch_loss = []
 
-            for images, labels, original in dataloader_train:
-                # Forward pass
-                images, labels, original = images.float().to(self.device), labels.to(self.device), original.to(self.device)
+            for batch_idx in range(len(train_labeled_loader)):
 
+                try:
+                    labeled_images, labels = next(labeled_iter)
+                except:
+                    labeled_iter = iter(train_labeled_loader)
+                    labeled_images, labels = next(labeled_iter)
+                
+                if train_pseudo_labeled_loader:
+                    try:
+                        unlabeled_images, pseudo_labels = next(unlabeled_iter)
+                    except:
+                        unlabeled_iter = iter(train_pseudo_labeled_loader)
+                        unlabeled_images, pseudo_labels = next(unlabeled_iter)
+
+                # Forward pass
+                labeled_images, labels = labeled_images.to(self.device), labels.to(self.device)
+
+                if train_pseudo_labeled_loader:
+                    unlabeled_images, pseudo_labels = unlabeled_images.to(self.device), pseudo_labels.to(self.device)
                 loss = 0
 
-                # Compute the loss for original labeled dataset
-                if torch.any(original == 1):
-                    outputs = model(images[original == 1])
-                    labels1 = labels[original == 1]
-                    loss += criterion(outputs, labels1)
-
-                # Compute the loss for pseudo labeled dataset
-                if torch.any(original == 0):
-                    outputs = model(images[original == 0])
-                    labels0 = labels[original == 0]
-                    loss += 0.2 * criterion(outputs, labels0)
+                loss += criterion(model(labeled_images), labels)
+                if train_pseudo_labeled_loader:
+                    loss += 0.2 * criterion(model(unlabeled_images), pseudo_labels)
                 
                 epoch_loss.append(loss.item())
 
