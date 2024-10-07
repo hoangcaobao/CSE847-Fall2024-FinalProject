@@ -37,7 +37,7 @@ def data_init(cfg_proj, cfg_m):
             transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
         ])
         
-        train_labeled_dataset, train_unlabeled_dataset = train_test_split(train_dataset, test_size=0.9, stratify=train_dataset.targets)
+        train_labeled_dataset, train_unlabeled_dataset = train_test_split(train_dataset, test_size=0.9, stratify=train_dataset.targets, random_state=42)
 
     elif cfg_proj.dataset_name == "STL10":
         transform = transforms.Compose([transforms.ToTensor()])
@@ -56,10 +56,11 @@ def data_init(cfg_proj, cfg_m):
             transforms.ToTensor(),
             transforms.Normalize(mean=stl10_mean, std=stl10_std)
         ])
+
+        train_unlabeled_dataset, _ = train_test_split(train_unlabeled_dataset, test_size=0.5, random_state=42)
+        train_labeled_dataset = [(image, label) for image, label in train_labeled_dataset]
+        train_unlabeled_dataset = [(image, -1) for image in train_unlabeled_dataset]
         
-        indices = np.random.choice(len(train_unlabeled_dataset), 50000, replace=False)
-        train_unlabeled_dataset = Subset(train_labeled_dataset, indices)
-    
     # GOLDEN BASELINE
     if cfg_proj.golden_baseline: 
         train_labeled_dataset = CustomDataset(train_dataset, transform=transform_train)

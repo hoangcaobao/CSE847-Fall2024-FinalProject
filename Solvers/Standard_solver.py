@@ -15,7 +15,7 @@ class Standard_solver(Solver_Base):
         self.set_random_seed(self.cfg_proj.seed)
         
         # Initialize the model, loss function, and optimizer
-        model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels)
+        model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=self.cfg_m.training.lr_init)
 

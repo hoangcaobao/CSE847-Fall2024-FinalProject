@@ -22,8 +22,8 @@ class MeanTeachers_solver(Solver_Base):
         return acc
 
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader, alpha = 0.99):
-        teacher_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels)
-        student_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels)
+        teacher_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
+        student_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
 
         teacher_model = teacher_model.to(self.device)
         student_model = student_model.to(self.device)

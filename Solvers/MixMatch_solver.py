@@ -23,7 +23,7 @@ class MixMatch_solver(Solver_Base):
         return acc
         
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader):
-        model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels)
+        model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
         optimizer = optim.SGD(model.parameters(), lr=0.002, momentum=0.9, weight_decay=5e-4)
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
         
@@ -32,7 +32,7 @@ class MixMatch_solver(Solver_Base):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.to(device)
         
-        ema_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels)
+        ema_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
         for param in ema_model.parameters():
             param.detach_()
         ema_optimizer = WeightEMA(model, ema_model, 0.999)

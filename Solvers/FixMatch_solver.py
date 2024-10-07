@@ -23,7 +23,7 @@ class FixMatch_solver(Solver_Base):
     
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader):
         
-        model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels)
+        model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
         optimizer = optim.SGD(model.parameters(), lr=0.03, momentum=0.9, weight_decay=5e-4)
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
         ema_model = None
