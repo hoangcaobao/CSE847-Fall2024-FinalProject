@@ -21,6 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_name", type = str, default="STL10", required=False) # STL10, CIFAR10
     parser.add_argument("-golden_baseline", type = bool, default=False, required=False)
 
+
     # Standard_solver, SelfTraining_solver, FixMatch_solver, MeanTeachers_solver, MixMatch_solver
     parser.add_argument("--solver", type = str, default = "SelfTraining_solver", required=False) 
 
