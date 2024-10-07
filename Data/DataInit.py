@@ -1,26 +1,29 @@
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split, Subset
 from torchvision import datasets, transforms
 from Data.DataPreProcessing import get_cifar10, TransformFixMatch, CustomDataset, TransformTwice
 import argparse
+import numpy as np 
 from sklearn.model_selection import train_test_split
 
 def data_init(cfg_proj, cfg_m):
 
     cifar10_mean = (0.4914, 0.4822, 0.4465)
     cifar10_std = (0.2471, 0.2435, 0.2616)
+    stl10_mean = (0.4467, 0.4398, 0.4066)
+    stl10_std = (0.2243, 0.2214, 0.2236)
     
     if cfg_proj.dataset_name == "MNIST":
         # MNIST dataset
         transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
         train_dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
         test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, download=True)
-
-    if cfg_proj.dataset_name == "CIFAR10":
+        
+    elif cfg_proj.dataset_name == "CIFAR10":
         transform = transforms.Compose([transforms.ToTensor()])
         train_dataset = datasets.CIFAR10(root='./data', train=True, transform=transform, download=True)
         test_dataset = datasets.CIFAR10(root='./data', train=False, transform=transform, download=True)
-
-    transform_train = transforms.Compose([
+        
+        transform_train = transforms.Compose([
             transforms.RandomHorizontalFlip(),
             transforms.RandomCrop(size=32,
                                 padding=int(32*0.125),
@@ -29,12 +32,33 @@ def data_init(cfg_proj, cfg_m):
             transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
         ])
         
-    transform_val = transforms.Compose([
+        transform_val = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
         ])
-    
-    train_labeled_dataset, train_unlabeled_dataset = train_test_split(train_dataset, test_size=0.9, stratify=train_dataset.targets)
+        
+        train_labeled_dataset, train_unlabeled_dataset = train_test_split(train_dataset, test_size=0.9, stratify=train_dataset.targets)
+
+    elif cfg_proj.dataset_name == "STL10":
+        transform = transforms.Compose([transforms.ToTensor()])
+        train_labeled_dataset = datasets.STL10(root='./data', split='train', transform=transform, download=True)
+        train_unlabeled_dataset = datasets.STL10(root='./data', split='unlabeled', transform=transform, download=True)
+        test_dataset = datasets.STL10(root='./data', split='test', transform=transform, download=True)
+        
+        transform_train = transforms.Compose([
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomCrop(size=96, padding=int(96 * 0.125), padding_mode='reflect'),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=stl10_mean, std=stl10_std)
+        ])
+
+        transform_val = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=stl10_mean, std=stl10_std)
+        ])
+        
+        indices = np.random.choice(len(train_unlabeled_dataset), 50000, replace=False)
+        train_unlabeled_dataset = Subset(train_labeled_dataset, indices)
     
     # GOLDEN BASELINE
     if cfg_proj.golden_baseline: 

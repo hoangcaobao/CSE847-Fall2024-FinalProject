@@ -13,7 +13,10 @@ class Conv2DModel(nn.Module):
         # self.fc1 = nn.Linear(64 * 7 * 7, 128)
         
         # CIFAR10
-        self.fc1 = nn.Linear(64 * 8 * 8, 128)
+        # self.fc1 = nn.Linear(64 * 8 * 8, 128)
+        
+        #STL10
+        self.fc1 = nn.Linear(64 * 24 * 24, 128)
         
         self.fc2 = nn.Linear(128, dim_out)
         self.relu = nn.ReLU()
@@ -30,7 +33,10 @@ class Conv2DModel(nn.Module):
         # x = x.view(-1, 64 * 7 * 7)
         
         # CIFAR 10
-        x = x.view(-1, 64 * 8 * 8)
+        # x = x.view(-1, 64 * 8 * 8)
+        
+        #STL10
+        x = x.view(-1, 64 * 24 * 24)
         
         x = self.fc1(x)
         x = self.relu(x)

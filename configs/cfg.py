@@ -5,7 +5,7 @@ def init_cfg(cfg_proj):
     n_solver = cfg_proj.solver
     config = get_default_configs()
 
-    if cfg_proj.dataset_name in ["MNIST", "CIFAR10"]:
+    if cfg_proj.dataset_name in ["MNIST", "CIFAR10", "STL10"]:
         config.data.dim_out = 10
     
     if cfg_proj.dataset_name == "MNITS":
