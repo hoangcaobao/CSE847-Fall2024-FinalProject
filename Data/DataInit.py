@@ -59,8 +59,7 @@ def data_init(cfg_proj, cfg_m):
 
         train_unlabeled_dataset, _ = train_test_split(train_unlabeled_dataset, test_size=0.5, random_state=42)
         train_labeled_dataset = [(image, label) for image, label in train_labeled_dataset]
-        train_unlabeled_dataset = [(image, -1) for image in train_unlabeled_dataset]
-        
+
     # GOLDEN BASELINE
     if cfg_proj.golden_baseline: 
         train_labeled_dataset = CustomDataset(train_dataset, transform=transform_train)
