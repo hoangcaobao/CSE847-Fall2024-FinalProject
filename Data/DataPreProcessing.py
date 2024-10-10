@@ -149,7 +149,9 @@ class CustomDatasetSelfTraining(Dataset):
             
         if image.shape == (3, 32, 32):
             image = np.transpose(image, (1, 2, 0))
-            
+        elif image.shape == (3, 96, 96):  
+            image = np.transpose(image, (1, 2, 0))
+        
         if image.dtype != np.uint8:
             image = (image * 255).astype(np.uint8)
             

@@ -16,7 +16,7 @@ def main(cfg_proj, cfg_m):
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gpu", type=str, default="1", required=False)
+    parser.add_argument("--gpu", type=str, default="0", required=False)
     parser.add_argument("--seed", type=int, default = 42, required=False) 
     parser.add_argument("--dataset_name", type = str, default="STL10", required=False) # STL10, CIFAR10
     parser.add_argument("-golden_baseline", type = bool, default=False, required=False)

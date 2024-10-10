@@ -9,20 +9,6 @@ from Data.DataPreProcessing import CustomDataset, CustomDatasetSelfTraining
 from tqdm import tqdm
 from torchvision import datasets, transforms
 
-cifar10_mean = (0.4914, 0.4822, 0.4465)
-cifar10_std = (0.2471, 0.2435, 0.2616)
-transform_val = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
-])
-transform_train = transforms.Compose([
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomCrop(size=32,
-                        padding=int(32*0.125),
-                        padding_mode='reflect'),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
-])
 
 class SelfTraining_solver(Solver_Base):
     
@@ -32,6 +18,37 @@ class SelfTraining_solver(Solver_Base):
     def run(self, train_labeled_loader, train_unlabeled_loader, test_loader):
         self.set_random_seed(self.cfg_proj.seed)
         
+        if self.cfg_proj.dataset_name == "CIFAR10":
+            cifar10_mean = (0.4914, 0.4822, 0.4465)
+            cifar10_std = (0.2471, 0.2435, 0.2616)
+            self.transform_val = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
+            ])
+            self.transform_train = transforms.Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomCrop(size=32,
+                                    padding=int(32*0.125),
+                                    padding_mode='reflect'),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
+            ])
+        elif self.cfg_proj.dataset_name == "STL10":
+            stl10_mean = (0.4467, 0.4398, 0.4066)
+            stl10_std = (0.2243, 0.2214, 0.2236)
+
+            self.transform_train = transforms.Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomCrop(size=96, padding=int(96 * 0.125), padding_mode='reflect'),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=stl10_mean, std=stl10_std)
+            ])
+
+            self.transform_val = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean=stl10_mean, std=stl10_std)
+            ])
+
         # Initialize the model, loss function, and optimizer
         model = self.train(train_labeled_loader, train_unlabeled_loader, test_loader)
 
@@ -61,7 +78,7 @@ class SelfTraining_solver(Solver_Base):
 
             print(f"Test performance: {self.eval_func(model, test_loader)}")
 
-            train_unlabeled_loader = DataLoader(dataset=CustomDatasetSelfTraining(unlabeled_imgs, transform=transform_val), batch_size=self.cfg_m.training.batch_size, shuffle=True, drop_last=False)
+            train_unlabeled_loader = DataLoader(dataset=CustomDatasetSelfTraining(unlabeled_imgs, transform=self.transform_val), batch_size=self.cfg_m.training.batch_size, shuffle=True, drop_last=False)
             unlabeled_imgs = []
 
             if len(pseudo_imgs):
@@ -76,7 +93,6 @@ class SelfTraining_solver(Solver_Base):
                     
                     # choose most confidence one
                     index = outputs >= 0.8
-
                     pseudo_imgs.append(original_images[index])
                     pseudo_labels.append(labels[index])
 
@@ -84,12 +100,11 @@ class SelfTraining_solver(Solver_Base):
                 
             pseudo_imgs = torch.cat(pseudo_imgs, dim = 0)
             pseudo_labels = torch.cat(pseudo_labels, dim = 0)    
-
             print(f"Number of pseudo labeled data: {pseudo_imgs.shape[0]}")
 
             unlabeled_imgs = torch.cat(unlabeled_imgs, dim = 0)
             
-            train_pseudo_labeled_loader =  DataLoader(dataset=CustomDataset(TensorDataset(pseudo_imgs, pseudo_labels), transform=transform_train), batch_size=self.cfg_m.training.batch_size, shuffle=True, drop_last=False)
+            train_pseudo_labeled_loader =  DataLoader(dataset=CustomDataset(TensorDataset(pseudo_imgs, pseudo_labels), transform=self.transform_train), batch_size=self.cfg_m.training.batch_size, shuffle=True, drop_last=False)
 
         return model
 
@@ -128,7 +143,6 @@ class SelfTraining_solver(Solver_Base):
                 if train_pseudo_labeled_loader:
                     unlabeled_images, pseudo_labels = unlabeled_images.to(self.device), pseudo_labels.to(self.device)
                 loss = 0
-
                 loss += criterion(model(labeled_images), labels)
                 if train_pseudo_labeled_loader:
                     loss += 0.2 * criterion(model(unlabeled_images), pseudo_labels)
