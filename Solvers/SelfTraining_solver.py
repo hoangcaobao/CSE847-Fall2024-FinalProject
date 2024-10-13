@@ -57,7 +57,7 @@ class SelfTraining_solver(Solver_Base):
         return acc
 
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader):
-        unlabeled_imgs = [item[0] for item in train_labeled_loader.dataset.dataset[:]]
+        unlabeled_imgs = [item[0] for item in train_unlabeled_loader.dataset.dataset[:]]
         unlabeled_imgs = torch.stack(unlabeled_imgs)
 
         pseudo_imgs = []

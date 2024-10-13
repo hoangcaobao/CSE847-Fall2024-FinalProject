@@ -4,6 +4,28 @@ from Data.DataPreProcessing import get_cifar10, TransformFixMatch, CustomDataset
 import argparse
 import numpy as np 
 from sklearn.model_selection import train_test_split
+from torch.utils.data import random_split
+
+def random_split_dataset(dataset, num_clients):
+    # Length of dataset and calculate sizes for each client
+    dataset_size = len(dataset)
+    split_sizes = [dataset_size // num_clients for _ in range(num_clients)]
+    
+    client_datasets = []
+
+    # Account for any leftover data
+    leftover = dataset_size % num_clients
+    for i in range(leftover):
+        split_sizes[i] += 1
+    
+    # Random Split
+    for client in range(num_clients-1):
+        dataset, client_dataset = train_test_split(dataset, test_size=split_sizes[client]/len(dataset), random_state=42)
+        client_datasets.append(client_dataset)
+
+    client_datasets.append(dataset)
+
+    return client_datasets
 
 def data_init(cfg_proj, cfg_m):
 
@@ -60,40 +82,55 @@ def data_init(cfg_proj, cfg_m):
         train_unlabeled_dataset, _ = train_test_split(train_unlabeled_dataset, test_size=0.5, random_state=42)
         train_labeled_dataset = [(image, label) for image, label in train_labeled_dataset]
         train_unlabeled_dataset = [(image, label) for image, label in train_unlabeled_dataset]
+    
+    train_labeled_datasets = random_split_dataset(train_labeled_dataset, cfg_proj.numberOfClients)
+    train_unlabeled_datasets = random_split_dataset(train_unlabeled_dataset, cfg_proj.numberOfClients)
 
+    train_labeled_loaders = []
+    train_unlabeled_loaders = []
+
+    for train_labeled_dataset in train_labeled_datasets:
+        # GOLDEN BASELINE
+        if cfg_proj.golden_baseline: 
+            train_labeled_dataset = CustomDataset(train_dataset, transform=transform_train)
+            train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
+        elif cfg_proj.solver == "FixMatch_solver":
+            train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
+            train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True)
+        elif cfg_proj.solver == "MixMatch_solver":
+            train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
+            train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=True)
+        else:
+            train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
+            train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
+        train_labeled_loaders.append(train_labeled_loader)
+    
+    for train_unlabeled_dataset in train_unlabeled_datasets:
+        if cfg_proj.golden_baseline: 
+            train_unlabeled_loader = None
+        elif cfg_proj.solver == "FixMatch_solver":
+            train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformFixMatch(mean=cifar10_mean, std=cifar10_std))
+            train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=8 * cfg_m.training.batch_size, shuffle=False)
+        elif cfg_proj.solver == "MixMatch_solver":
+            train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformTwice(transform_train))            
+            train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=True)
+        else:
+            train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=transform_train)            
+            train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
+        train_unlabeled_loaders.append(train_unlabeled_loader)
+        
     # GOLDEN BASELINE
     if cfg_proj.golden_baseline: 
-        train_labeled_dataset = CustomDataset(train_dataset, transform=transform_train)
         test_dataset = CustomDataset(test_dataset, transform=transform_val)
-
-        train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
-        train_unlabeled_loader = None
         test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
-
     elif cfg_proj.solver == "FixMatch_solver":
-        train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
-        train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformFixMatch(mean=cifar10_mean, std=cifar10_std))
         test_dataset = CustomDataset(test_dataset, transform=transform_val)
-        
-        train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True)
-        train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=8 * cfg_m.training.batch_size, shuffle=False)
         test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
-        
     elif cfg_proj.solver == "MixMatch_solver":
-        train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
-        train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformTwice(transform_train))
         test_dataset = CustomDataset(test_dataset, transform=transform_val)
-        
-        train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=True)
-        train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=True)
+        test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
+    else:
+        test_dataset = CustomDataset(test_dataset, transform=transform_val)
         test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
 
-    else:
-        train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
-        train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=transform_train)
-        test_dataset = CustomDataset(test_dataset, transform=transform_val)
-        
-        train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
-        train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
-        test_loader = DataLoader(dataset=test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
-    return train_labeled_loader, train_unlabeled_loader, test_loader
+    return train_labeled_loaders, train_unlabeled_loaders, test_loader
