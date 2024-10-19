@@ -95,9 +95,9 @@ def data_init(cfg_proj, cfg_m):
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         ])
         
-        train_labeled_dataset = CatAndDogDataset(root_dir="/research/cvl-tranman1/cse803_Project/CSE847/data/training_set/training_set/", labeled=True, labeled_ratio=1, transform=transform_train)    
-        train_unlabeled_dataset = CatAndDogDataset(root_dir="/research/cvl-tranman1/cse803_Project/CSE847/data/training_set/training_set/", labeled=False, transform=transform_train)
-        test_dataset = CatAndDogDataset(root_dir="/research/cvl-tranman1/cse803_Project/CSE847/data/test_set/test_set/", transform=transform_val)
+        train_labeled_dataset = CatAndDogDataset(root_dir="./data/training_set/training_set/", labeled=True, labeled_ratio=1, transform=transform_train)    
+        train_unlabeled_dataset = CatAndDogDataset(root_dir="./data/training_set/training_set/", labeled=False, transform=transform_train)
+        test_dataset = CatAndDogDataset(root_dir="./data/test_set/test_set/", transform=transform_val)
         
         train_labeled_loaders = DataLoader(train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True)
         train_unlabeled_loaders = DataLoader(train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True)
