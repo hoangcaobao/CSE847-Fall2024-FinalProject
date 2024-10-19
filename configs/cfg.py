@@ -7,6 +7,8 @@ def init_cfg(cfg_proj):
 
     if cfg_proj.dataset_name in ["MNIST", "CIFAR10", "STL10"]:
         config.data.dim_out = 10
+    elif cfg_proj.dataset_name in ["Cat_and_Dog"]:
+        config.data.dim_out = 2
     
     if cfg_proj.dataset_name == "MNITS":
         config.data.in_channels = 1
@@ -14,8 +16,8 @@ def init_cfg(cfg_proj):
         config.data.in_channels = 3
 
     if n_solver in ["Standard_solver", "SelfTraining_solver", "MeanTeachers_solver"]:
-        config.training.epochs = 200
-        config.training.batch_size = 512
+        config.training.epochs = 25
+        config.training.batch_size = 32
         config.training.lr_init = 1.0e-3
         config.training.tol = 1e-4
         

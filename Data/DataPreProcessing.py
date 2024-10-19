@@ -1,5 +1,7 @@
 import logging 
 import math
+import os
+import random
 
 import torch
 import numpy as np
@@ -127,7 +129,7 @@ class CustomDataset(Dataset):
         if image.dtype != np.uint8:
             image = (image * 255).astype(np.uint8)
             
-        if isinstance(image, np.ndarray):    
+        if isinstance(image, np.ndarray):  
             image = Image.fromarray(image)
             
         if self.transform:
@@ -171,3 +173,53 @@ class TransformTwice:
         out1 = self.transform(inp)
         out2 = self.transform(inp)
         return out1, out2
+    
+    
+class CatAndDogDataset(Dataset):
+    def __init__(self, root_dir, labeled=True, labeled_ratio=0.1, transform=None):
+        self.root_dir=root_dir 
+        self.transform=transform 
+        self.labeled=labeled
+        self.labeled_ratio=labeled_ratio
+        self.labeled_data=[]
+        self.unlabeled_data=[]
+        
+        self._load_data()
+        
+    def _load_data(self):
+        all_data = []
+        for class_dir in ["cats", "dogs"]:
+            class_label = 0 if class_dir == "cats" else 1
+            class_path = os.path.join(self.root_dir, class_dir)
+            for img_file in os.listdir(class_path):
+                if img_file.endswith(('.png', '.jpg', '.jpeg')):
+                    all_data.append((os.path.join(class_path, img_file), class_label))
+                
+        random.shuffle(all_data)
+        
+        labeled_size = int(self.labeled_ratio * len(all_data))
+        if self.labeled:
+            self.labeled_data = all_data[:labeled_size]
+        else:
+            self.unlabeled_data = all_data[labeled_size:]
+            
+    def __len__(self):
+        if self.labeled:
+            return len(self.labeled_data)
+        else:
+            return len(self.unlabeled_data)
+        
+    def __getitem__(self, idx):
+        if self.labeled:
+            img_path, label = self.labeled_data[idx]
+        else:
+            img_path, label = self.unlabeled_data[idx]
+            
+        image = Image.open(img_path).convert('RGB')
+        if self.transform:
+            image = self.transform(image)
+            
+        if self.labeled:
+            return image, label 
+        else:
+            return image, -1

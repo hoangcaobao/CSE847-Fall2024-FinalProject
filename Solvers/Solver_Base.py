@@ -87,7 +87,7 @@ class Solver_Base:
                 loss.backward()
                 optimizer.step()
 
-            if epoch % 25 == 0:
+            if epoch % 5 == 0:
                 print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}, Accuracy: {self.eval_func(model, test_loader)}')
 
         return model

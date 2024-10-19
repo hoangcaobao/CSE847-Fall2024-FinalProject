@@ -22,6 +22,9 @@ class Conv2DModel(nn.Module):
         if self.dataset_name == "STL10":
             self.fc1 = nn.Linear(64 * 24 * 24, 128)
         
+        if self.dataset_name == "Cat_and_Dog":
+            self.fc1 = nn.Linear(64 * 16 * 16, 128)
+        
         self.fc2 = nn.Linear(128, dim_out)
         self.relu = nn.ReLU()
 
@@ -44,6 +47,10 @@ class Conv2DModel(nn.Module):
         #STL10
         if self.dataset_name == "STL10":
             x = x.view(-1, 64 * 24 * 24)
+        
+        #CatandDog
+        if self.dataset_name == "Cat_and_Dog":
+            x = x.view(-1, 64 * 16 * 16)
         
         x = self.fc1(x)
         x = self.relu(x)
