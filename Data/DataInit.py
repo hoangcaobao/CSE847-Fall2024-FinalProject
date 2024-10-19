@@ -1,6 +1,6 @@
 from torch.utils.data import DataLoader, random_split, Subset
 from torchvision import datasets, transforms
-from Data.DataPreProcessing import get_cifar10, TransformFixMatch, CustomDataset, TransformTwice, CatAndDogDataset
+from Data.DataPreProcessing import get_cifar10, TransformFixMatch, CustomDataset, TransformTwice, LoadCatAndDogDataset
 import argparse
 import numpy as np 
 from sklearn.model_selection import train_test_split
@@ -84,7 +84,7 @@ def data_init(cfg_proj, cfg_m):
         train_unlabeled_dataset = [(image, label) for image, label in train_unlabeled_dataset]
     
     elif cfg_proj.dataset_name == "Cat_and_Dog":
-        transform = transforms.Compose([transforms.ToTensor()])
+        transform = transforms.Compose([transforms.ToTensor(), transforms.Resize((64, 64))])
         transform_val = transforms.Compose([transforms.ToTensor(),transforms.Resize((64,64)), transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
         transform_train = transforms.Compose([
             transforms.Resize((64, 64)),
@@ -95,16 +95,10 @@ def data_init(cfg_proj, cfg_m):
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         ])
         
-        train_labeled_dataset = CatAndDogDataset(root_dir="./data/training_set/training_set/", labeled=True, labeled_ratio=1, transform=transform_train)    
-        train_unlabeled_dataset = CatAndDogDataset(root_dir="./data/training_set/training_set/", labeled=False, transform=transform_train)
-        test_dataset = CatAndDogDataset(root_dir="./data/test_set/test_set/", transform=transform_val)
+        train_dataset = LoadCatAndDogDataset(root_dir="./data/training_set/training_set/",  transform=transform)    
+        test_dataset = LoadCatAndDogDataset(root_dir="./data/test_set/test_set/", transform=transform)
+        train_labeled_dataset, train_unlabeled_dataset = train_test_split(train_dataset, test_size=0.9, stratify=[i[1] for i in train_dataset], random_state=42)
         
-        train_labeled_loaders = DataLoader(train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True)
-        train_unlabeled_loaders = DataLoader(train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=cfg_m.training.batch_size, shuffle=False)
-        
-        return train_labeled_loaders, train_unlabeled_loaders, test_loader
-    
     train_labeled_datasets = random_split_dataset(train_labeled_dataset, cfg_proj.numberOfClients)
     train_unlabeled_datasets = random_split_dataset(train_unlabeled_dataset, cfg_proj.numberOfClients)
 
