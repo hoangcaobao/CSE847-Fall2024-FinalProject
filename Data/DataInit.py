@@ -126,7 +126,7 @@ def data_init(cfg_proj, cfg_m):
             train_unlabeled_loader = None
         elif cfg_proj.solver == "FixMatch_solver":
             train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformFixMatch(mean=cifar10_mean, std=cifar10_std))
-            train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=8 * cfg_m.training.batch_size, shuffle=False)
+            train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=9 * cfg_m.training.batch_size, shuffle=False)
         elif cfg_proj.solver == "MixMatch_solver":
             train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformTwice(transform_train))            
             train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=True)

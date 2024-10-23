@@ -31,7 +31,7 @@ class FixMatch_solver(Solver_Base):
         if not model:
             model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
     
-        optimizer = optim.SGD(model.parameters(), lr=0.03, momentum=0.9, weight_decay=5e-4)
+        optimizer = optim.SGD(model.parameters(), lr=0.005, momentum=0.9, weight_decay=5e-4)
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
         ema_model = None
         
@@ -64,6 +64,7 @@ class FixMatch_solver(Solver_Base):
                 inputs_u_w, inputs_u_s = inputs_u_w.to(device), inputs_u_s.to(device)
                 
                 batch_size = inputs_x.shape[0]
+                # import pdb; pdb.set_trace()
                 inputs = torch.cat([inputs_x, inputs_u_w, inputs_u_s], dim=0)
                 logits = model(inputs)
                 logits_x = logits[:batch_size]

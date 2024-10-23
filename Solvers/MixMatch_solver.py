@@ -31,17 +31,17 @@ class MixMatch_solver(Solver_Base):
         if not model:
             model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
         optimizer = optim.SGD(model.parameters(), lr=0.002, momentum=0.9, weight_decay=5e-4)
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+        # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
         
         num_epochs = 200
         best_acc = 0.0
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.to(device)
         
-        ema_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
-        for param in ema_model.parameters():
-            param.detach_()
-        ema_optimizer = WeightEMA(model, ema_model, 0.999)
+        # ema_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
+        # for param in ema_model.parameters():
+        #     param.detach_()
+        # ema_optimizer = WeightEMA(model, ema_model, 0.999)
         
         criterion = SemiLoss()
         
@@ -68,7 +68,7 @@ class MixMatch_solver(Solver_Base):
                     (inputs_u, inputs_u2), _ = next(unlabeled_iter)
                     
                 batch_size = inputs_x.shape[0]
-                targets_x = torch.zeros(batch_size, 10, device=targets_x.device).scatter_(1, targets_x.view(-1,1).long(), 1)
+                targets_x = torch.zeros(batch_size, 2, device=targets_x.device).scatter_(1, targets_x.view(-1,1).long(), 1)
                 
                 inputs_x, targets_x = inputs_x.to(device), targets_x.to(device)
                 inputs_u, inputs_u2 = inputs_u.to(device), inputs_u2.to(device)
@@ -111,6 +111,7 @@ class MixMatch_solver(Solver_Base):
     
     def mixup(self, inputs_x, inputs_u, inputs_u2, targets_x, targets_u, targets_u2, alpha=0.75):
         all_inputs = torch.cat([inputs_x, inputs_u, inputs_u2], dim=0)
+        # import pdb; pdb.set_trace()
         all_targets = torch.cat([targets_x, targets_u, targets_u2], dim=0)
         
         lam = np.random.beta(alpha, alpha)

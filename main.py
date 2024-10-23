@@ -30,7 +30,7 @@ if __name__ == "__main__":
     parser.add_argument("--numberOfClients", type = int, default = 1, required=False) # 1 means normal training
 
     # Standard_solver, SelfTraining_solver, FixMatch_solver, MeanTeachers_solver, MixMatch_solver
-    parser.add_argument("--solver", type = str, default = "Standard_solver", required=False) 
+    parser.add_argument("--solver", type = str, default = "FixMatch_solver", required=False) 
 
     cfg_proj = parser.parse_args()
     cfg_m = init_cfg(cfg_proj)

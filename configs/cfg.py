@@ -22,6 +22,8 @@ def init_cfg(cfg_proj):
         config.training.batch_size = 32
         config.training.lr_init = 1.0e-3
         config.training.tol = 1e-4
+    elif n_solver in ['FixMatch_solver', 'MixMatch_solver']:
+        config.training.batch_size = 32
     
     if cfg_proj.numberOfClients > 1:
         config.training.epochs = 5
