@@ -5,25 +5,37 @@ import torch.optim as optim
 import torch
 import numpy as np
 from tqdm import tqdm
+import copy 
 
 class MeanTeachers_solver(Solver_Base):
     
     def __init__(self, cfg_proj, cfg_m, name = "Std"):
         Solver_Base.__init__(self, cfg_proj, cfg_m, name)
         
-    def run(self, train_labeled_loader, train_unlabeled_loader, test_loader):
+    def run(self, train_labeled_loader, train_unlabeled_loader, test_loader, model = None):
         self.set_random_seed(self.cfg_proj.seed)
         
-        # Initialize the model, loss function, and optimizer
-        model = self.train(train_labeled_loader, train_unlabeled_loader, test_loader)
+        local_train = True if model else False
 
+        # Initialize the model, loss function, and optimizer
+        model = self.train(train_labeled_loader, train_unlabeled_loader, test_loader, model = model)
+
+        if local_train:
+            return model
+        
         acc = self.eval_func(model, test_loader)
 
         return acc
 
-    def train(self, train_labeled_loader, train_unlabeled_loader, test_loader, alpha = 0.99):
-        teacher_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
-        student_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
+    def train(self, train_labeled_loader, train_unlabeled_loader, test_loader, alpha = 0.99, model = None):
+        
+        if not model:
+            teacher_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
+            student_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
+
+        else:
+            teacher_model = model
+            student_model = copy.deepcopy(model)
 
         teacher_model = teacher_model.to(self.device)
         student_model = student_model.to(self.device)

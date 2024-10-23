@@ -13,17 +13,24 @@ class FixMatch_solver(Solver_Base):
     def __init__(self, cfg_proj, cfg_m, name = "Std"):
         Solver_Base.__init__(self, cfg_proj, cfg_m, name)
             
-    def run(self, train_labeled_loader, train_unlabeled_loader, test_loader):
+    def run(self, train_labeled_loader, train_unlabeled_loader, test_loader, model = None):
         self.set_random_seed(self.cfg_proj.seed)
         
-        model = self.train(train_labeled_loader, train_unlabeled_loader, test_loader)
+        local_train = True if model else False
+
+        model = self.train(train_labeled_loader, train_unlabeled_loader, test_loader, model = model)
+        
+        if local_train:
+            return model
+        
         acc = self.eval_func(model, test_loader)
         
         return acc 
     
-    def train(self, train_labeled_loader, train_unlabeled_loader, test_loader):
-        
-        model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
+    def train(self, train_labeled_loader, train_unlabeled_loader, test_loader, model = None):
+        if not model:
+            model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
+    
         optimizer = optim.SGD(model.parameters(), lr=0.03, momentum=0.9, weight_decay=5e-4)
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
         ema_model = None

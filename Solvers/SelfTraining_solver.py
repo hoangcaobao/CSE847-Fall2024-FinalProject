@@ -48,7 +48,16 @@ class SelfTraining_solver(Solver_Base):
                 transforms.ToTensor(),
                 transforms.Normalize(mean=stl10_mean, std=stl10_std)
             ])
-
+        elif self.cfg_proj.dataset_name == "Cat_and_Dog":
+            self.transform_val = transforms.Compose([transforms.ToTensor(),transforms.Resize((64,64)), transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
+            self.transform_train = transforms.Compose([
+                transforms.Resize((64, 64)),
+                transforms.RandomCrop(size=64,
+                                    padding=int(64*0.125),
+                                    padding_mode='reflect'),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+            ])
         # Initialize the model, loss function, and optimizer
         model = self.train(train_labeled_loader, train_unlabeled_loader, test_loader)
 
