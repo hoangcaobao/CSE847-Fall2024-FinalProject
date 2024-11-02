@@ -30,13 +30,14 @@ class FixMatch_solver(Solver_Base):
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader, model = None):
         if not model:
             model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
-    
-        optimizer = optim.SGD(model.parameters(), lr=0.005, momentum=0.9, weight_decay=5e-4)
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+
+        num_epochs=200
+        
+        optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=5e-4)
+        # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+        scheduler = optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.1, total_iters=num_epochs)
         ema_model = None
         
-        
-        num_epochs = 200
         best_acc = 0.0
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.to(device)

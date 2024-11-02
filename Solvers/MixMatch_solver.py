@@ -31,9 +31,9 @@ class MixMatch_solver(Solver_Base):
         if not model:
             model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
         optimizer = optim.SGD(model.parameters(), lr=0.002, momentum=0.9, weight_decay=5e-4)
-        # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
         
-        num_epochs = 200
+        num_epochs = 100
         best_acc = 0.0
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.to(device)
@@ -51,7 +51,9 @@ class MixMatch_solver(Solver_Base):
             labeled_iter = iter(train_labeled_loader)
             unlabeled_iter = iter(train_unlabeled_loader)
             
-            train_iteration = 90
+            train_iteration = 60
+            
+            # import pdb; pdb.set_trace()
             
             for batch_idx in tqdm(range(train_iteration)):
                 
@@ -85,6 +87,8 @@ class MixMatch_solver(Solver_Base):
                 #MixUp: combine labeled and unlabeled data using MixMatch's augmentation
                 mixed_input, mixed_target = self.mixup(inputs_x, inputs_u, inputs_u2, targets_x, targets_u, targets_u)
                 
+                # import pdb; pdb.set_trace()
+                
                 #Forward pass
                 logits = [model(mixed_input[0])]
                 for inp in mixed_input[1:]:
@@ -101,7 +105,7 @@ class MixMatch_solver(Solver_Base):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-                # scheduler.step()
+                scheduler.step()
                 # ema_optimizer.step()
                 
             acc = self.eval_func(model, test_loader)
@@ -127,6 +131,9 @@ class MixMatch_solver(Solver_Base):
         
         mixed_input = list(torch.split(mixed_input, batch_size))
         mixed_input = self.interleave(mixed_input, batch_size)
+        
+        
+        # import pdb; pdb.set_trace()
         
         return mixed_input, mixed_target  
 

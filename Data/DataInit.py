@@ -45,19 +45,39 @@ def data_init(cfg_proj, cfg_m):
         train_dataset = datasets.CIFAR10(root='./data', train=True, transform=transform, download=True)
         test_dataset = datasets.CIFAR10(root='./data', train=False, transform=transform, download=True)
         
-        transform_train = transforms.Compose([
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomCrop(size=32,
-                                padding=int(32*0.125),
-                                padding_mode='reflect'),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
-        ])
-        
-        transform_val = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
-        ])
+        if cfg_proj.model == "simpleCNN":
+            transform_train = transforms.Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomCrop(size=32,
+                                    padding=int(32*0.125),
+                                    padding_mode='reflect'),
+                # transforms.Resize(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
+            ])
+            
+            transform_val = transforms.Compose([
+                # transforms.Resize(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
+            ])
+            
+        if cfg_proj.model == "resnet50":
+            transform_train = transforms.Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomCrop(size=32,
+                                    padding=int(32*0.125),
+                                    padding_mode='reflect'),
+                transforms.Resize(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
+            ])
+            
+            transform_val = transforms.Compose([
+                transforms.Resize(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
+            ])
         
         train_labeled_dataset, train_unlabeled_dataset = train_test_split(train_dataset, test_size=0.9, stratify=train_dataset.targets, random_state=42)
 
@@ -85,15 +105,25 @@ def data_init(cfg_proj, cfg_m):
     
     elif cfg_proj.dataset_name == "Cat_and_Dog":
         transform = transforms.Compose([transforms.ToTensor(), transforms.Resize((64, 64))])
-        transform_val = transforms.Compose([transforms.ToTensor(),transforms.Resize((64,64)), transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
+        transform_val = transforms.Compose([
+            transforms.ToTensor(),transforms.Resize((64,64)), 
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+        ])
         transform_train = transforms.Compose([
             transforms.Resize((64, 64)),
             transforms.RandomCrop(size=64,
                                 padding=int(64*0.125),
                                 padding_mode='reflect'),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+            # transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         ])
+        if cfg_proj.solver == "MixMatch_solver":
+            transform_train = transforms.Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomCrop(size=64, padding=int(64*0.125), padding_mode='reflect'),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+            ])
         
         train_dataset = LoadCatAndDogDataset(root_dir="./data/training_set/training_set/",  transform=transform)    
         test_dataset = LoadCatAndDogDataset(root_dir="./data/test_set/test_set/", transform=transform)

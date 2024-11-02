@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torchvision.models as models
 
 # Define a simple Conv2D model
 class Conv2DModel(nn.Module):
@@ -56,3 +57,31 @@ class Conv2DModel(nn.Module):
         x = self.relu(x)
         x = self.fc2(x)
         return x
+    
+
+class ResNet50(nn.Module):
+    def __init__(self, dim_out, in_channels=3, dataset_name="CIFAR10", pretrained=False):
+        super(ResNet50, self).__init__()
+        
+        self.resnet50 = models.resnet50(pretrained=pretrained)
+            
+        self.resnet50.fc = nn.Linear(self.resnet50.fc.in_features, dim_out)
+    
+    def forward(self, x):
+        return self.resnet50(x)
+    
+
+# class VGG16(nn.Module):
+#     def __init__(self, dim_out, in_channels=3, dataset_name="CIFAR10", pretrained=False):
+#         super(VGG16, self).__init__()
+#         self.vgg16 = models.vgg16(pretrained=pretrained)
+        
+#         self.vgg16.classifier[6] = nn.Linear(self.vgg16.classifier[6].in_features, dim_out)
+        
+#     def forward(self, x):
+#         return self.vgg16(x)
+    
+    
+
+
+    
