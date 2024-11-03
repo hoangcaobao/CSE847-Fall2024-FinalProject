@@ -62,11 +62,20 @@ class Conv2DModel(nn.Module):
 class ResNet50(nn.Module):
     def __init__(self, dim_out, in_channels=3, dataset_name="CIFAR10", pretrained=False):
         super(ResNet50, self).__init__()
-        self.resnet50 = models.resnet50(pretrained=pretrained)
+        self.resnet50 = models.resnet50(weights = False)
         self.resnet50.fc = nn.Linear(self.resnet50.fc.in_features, dim_out)
     
     def forward(self, x):
         return self.resnet50(x)
+    
+class ResNet18(nn.Module):
+    def __init__(self, dim_out, in_channels=3, dataset_name="CIFAR10", pretrained=False):
+        super(ResNet18, self).__init__()
+        self.resnet18 = models.resnet18(weights = False)
+        self.resnet18.fc = nn.Linear(self.resnet18.fc.in_features, dim_out)
+    
+    def forward(self, x):
+        return self.resnet18(x)
     
 class VGG16(nn.Module):
     def __init__(self, dim_out, in_channels=3, dataset_name="CIFAR10", pretrained=False):
