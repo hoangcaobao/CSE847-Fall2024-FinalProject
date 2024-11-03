@@ -1,7 +1,7 @@
 import numpy as np
 from Solvers.Solver_Base import Solver_Base
 import sys
-
+from Models.model_loader import model_loader
 from Solvers.Standard_solver import Standard_solver
 from Solvers.SelfTraining_solver import SelfTraining_solver
 from Solvers.FixMatch_solver import FixMatch_solver
@@ -55,7 +55,7 @@ class FedAvg_solver(Solver_Base):
         local_solver = local_solver_loader(self.cfg_proj, self.cfg_m)
 
         # Initialize the model, loss function, and optimizer
-        global_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
+        global_model = model_loader(self.cfg_proj, self.cfg_m)
         
         for iter in range(40):
             local_models = []

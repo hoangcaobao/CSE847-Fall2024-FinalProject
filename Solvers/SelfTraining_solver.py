@@ -1,5 +1,6 @@
 from Solvers.Solver_Base import Solver_Base
 from Models.model import Conv2DModel
+from Models.model_loader import model_loader
 import torch.nn as nn
 import torch.optim as optim
 import torch
@@ -75,7 +76,7 @@ class SelfTraining_solver(Solver_Base):
         train_pseudo_labeled_loader = None
         
         for _ in range(10):
-            model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
+            model = model_loader(self.cfg_proj, self.cfg_m)
             criterion = nn.CrossEntropyLoss()
             optimizer = optim.Adam(model.parameters(), lr=self.cfg_m.training.lr_init)
 

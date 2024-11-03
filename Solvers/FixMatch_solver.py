@@ -7,7 +7,7 @@ import numpy as np
 from Data.DataPreProcessing import get_cifar10
 from torch.utils.data import TensorDataset, DataLoader, random_split 
 from tqdm import tqdm
- 
+from Models.model_loader import model_loader
 
 class FixMatch_solver(Solver_Base):
     def __init__(self, cfg_proj, cfg_m, name = "Std"):
@@ -29,8 +29,7 @@ class FixMatch_solver(Solver_Base):
     
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader, model = None):
         if not model:
-            model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
-
+            model = model_loader(self.cfg_proj, self.cfg_m)
         num_epochs=200
         
         optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=5e-4)

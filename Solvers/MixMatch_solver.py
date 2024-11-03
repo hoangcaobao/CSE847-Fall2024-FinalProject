@@ -3,6 +3,7 @@ from Models.model import Conv2DModel
 import torch.nn as nn 
 import torch.optim as optim 
 import torch 
+from Models.model_loader import model_loader
 import numpy as np 
 from Data.DataPreProcessing import get_cifar10
 from torch.utils.data import DataLoader
@@ -29,7 +30,7 @@ class MixMatch_solver(Solver_Base):
         
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader, model = None):
         if not model:
-            model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
+            model = model_loader(self.cfg_proj, self.cfg_m)
         optimizer = optim.SGD(model.parameters(), lr=0.002, momentum=0.9, weight_decay=5e-4)
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
         
