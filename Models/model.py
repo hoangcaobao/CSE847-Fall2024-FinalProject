@@ -86,6 +86,15 @@ class VGG16(nn.Module):
     def forward(self, x):
         return self.vgg16(x)
     
+class DenseNet121(nn.Module):
+    def __init__(self, dim_out, in_channels=3, dataset_name="CIFAR10", pretrained=False):
+        super(DenseNet121, self).__init__()
+        self.densenet121 = models.densenet121(weights = False)
+        self.densenet121.classifier = nn.Linear(self.densenet121.classifier.in_features, dim_out) 
+        
+    def forward(self, x):
+        return self.densenet121(x)
+    
     
 
 
