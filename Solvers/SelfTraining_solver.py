@@ -126,46 +126,49 @@ class SelfTraining_solver(Solver_Base):
         labeled_iter = iter(train_labeled_loader)
         if train_pseudo_labeled_loader:
             unlabeled_iter = iter(train_pseudo_labeled_loader)
+        
+        try:
+            for epoch in range(self.cfg_m.training.epochs):
+                model.train()
 
-        for epoch in range(self.cfg_m.training.epochs):
-            model.train()
+                epoch_loss = []
 
-            epoch_loss = []
+                for batch_idx in range(len(train_labeled_loader)):
 
-            for batch_idx in range(len(train_labeled_loader)):
-
-                try:
-                    labeled_images, labels = next(labeled_iter)
-                except:
-                    labeled_iter = iter(train_labeled_loader)
-                    labeled_images, labels = next(labeled_iter)
-                
-                if train_pseudo_labeled_loader:
                     try:
-                        unlabeled_images, pseudo_labels = next(unlabeled_iter)
+                        labeled_images, labels = next(labeled_iter)
                     except:
-                        unlabeled_iter = iter(train_pseudo_labeled_loader)
-                        unlabeled_images, pseudo_labels = next(unlabeled_iter)
+                        labeled_iter = iter(train_labeled_loader)
+                        labeled_images, labels = next(labeled_iter)
+                    
+                    if train_pseudo_labeled_loader:
+                        try:
+                            unlabeled_images, pseudo_labels = next(unlabeled_iter)
+                        except:
+                            unlabeled_iter = iter(train_pseudo_labeled_loader)
+                            unlabeled_images, pseudo_labels = next(unlabeled_iter)
 
-                # Forward pass
-                labeled_images, labels = labeled_images.to(self.device), labels.to(self.device)
+                    # Forward pass
+                    labeled_images, labels = labeled_images.to(self.device), labels.to(self.device)
 
-                if train_pseudo_labeled_loader:
-                    unlabeled_images, pseudo_labels = unlabeled_images.to(self.device), pseudo_labels.to(self.device)
-                loss = 0
-                loss += criterion(model(labeled_images), labels)
-                if train_pseudo_labeled_loader:
-                    loss += 0.2 * criterion(model(unlabeled_images), pseudo_labels)
-                
-                epoch_loss.append(loss.item())
+                    if train_pseudo_labeled_loader:
+                        unlabeled_images, pseudo_labels = unlabeled_images.to(self.device), pseudo_labels.to(self.device)
+                    loss = 0
+                    loss += criterion(model(labeled_images), labels)
+                    if train_pseudo_labeled_loader:
+                        loss += 0.2 * criterion(model(unlabeled_images), pseudo_labels)
+                    
+                    epoch_loss.append(loss.item())
 
-                # Backward and optimize
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                    # Backward and optimize
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
 
-            if epoch % 25 == 0:
-                print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}')
+                if epoch % 25 == 0:
+                    print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}')
+        except:
+            pass
 
         return model
     
