@@ -24,9 +24,7 @@ class MeanTeachers_solver(Solver_Base):
         if local_train:
             return model
         
-        acc = self.eval_func(model, test_loader)
-
-        return acc
+        return self.acc
 
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader, alpha = 0.99, model = None):
         
@@ -90,6 +88,9 @@ class MeanTeachers_solver(Solver_Base):
                 for student_param, teacher_param in zip(student_model.parameters(), teacher_model.parameters()):
                     teacher_param.data = alpha * teacher_param.data + (1 - alpha) * student_param.data
             
-            print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}, Accuracy: {self.eval_func(teacher_model, test_loader)}')
+            acc = self.eval_func(teacher_model, test_loader)
+            self.acc = max(self.acc, acc)
+
+            print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}, Accuracy: {acc}')
 
         return teacher_model

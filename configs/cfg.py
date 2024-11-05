@@ -15,21 +15,11 @@ def init_cfg(cfg_proj):
     else:
         config.data.in_channels = 3
 
-    if n_solver in ["Standard_solver", "SelfTraining_solver", "MeanTeachers_solver"]:
-        config.training.epochs = 200
-        
-        if cfg_proj.model == "resnet50" and cfg_proj.golden_baseline:
-            config.training.epochs = 30
-        
-        if n_solver == "MeanTeachers_solver" and cfg_proj.dataset_name == "Cat_and_Dog":
-            config.training.epochs = 50
+    config.training.epochs = 100
+    config.training.batch_size = 128
+    config.training.lr_init = 1.0e-3
+    config.training.tol = 1e-4
 
-        config.training.batch_size = 32
-        config.training.lr_init = 1.0e-3
-        config.training.tol = 1e-4
-    elif n_solver in ['FixMatch_solver', 'MixMatch_solver']:
-        config.training.batch_size = 128
-    
     if cfg_proj.numberOfClients > 1:
         config.training.epochs = 5
 

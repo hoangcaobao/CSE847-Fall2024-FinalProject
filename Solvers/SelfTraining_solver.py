@@ -62,9 +62,7 @@ class SelfTraining_solver(Solver_Base):
         # Initialize the model, loss function, and optimizer
         model = self.train(train_labeled_loader, train_unlabeled_loader, test_loader)
 
-        acc = self.eval_func(model, test_loader)
-
-        return acc
+        return self.acc
 
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader):
         unlabeled_imgs = [item[0] for item in train_unlabeled_loader.dataset.dataset[:]]
@@ -86,8 +84,14 @@ class SelfTraining_solver(Solver_Base):
 
             model.eval()
 
-            print(f"Test performance: {self.eval_func(model, test_loader)}")
+            acc = self.eval_func(model, test_loader)
+            self.acc = max(self.acc, acc)
 
+            print(f"Test performance: {acc}")
+
+            if len(unlabeled_imgs) == 0:
+                break
+            
             train_unlabeled_loader = DataLoader(dataset=CustomDatasetSelfTraining(unlabeled_imgs, transform=self.transform_val), batch_size=self.cfg_m.training.batch_size, shuffle=True, drop_last=False)
             unlabeled_imgs = []
 

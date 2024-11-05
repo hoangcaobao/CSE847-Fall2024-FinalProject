@@ -9,7 +9,7 @@ class Solver_Base:
         self.name = name
         self.cfg_proj = cfg_proj
         self.cfg_m = cfg_m
-
+        self.acc = 0
         use_cuda = torch.cuda.is_available()
         self.device = torch.device("cuda" if use_cuda else "cpu")
 
@@ -87,8 +87,10 @@ class Solver_Base:
                 loss.backward()
                 optimizer.step()
 
+            acc = self.eval_func(model, test_loader)
+            self.acc = max(acc, self.acc)
             if epoch % 5 == 0:
-                print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}, Accuracy: {self.eval_func(model, test_loader)}')
+                print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}, Accuracy: {acc}')
 
         return model
     

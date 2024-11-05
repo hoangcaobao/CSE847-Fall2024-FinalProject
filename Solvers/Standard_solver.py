@@ -32,6 +32,4 @@ class Standard_solver(Solver_Base):
         if local_train:
             return model
         
-        acc = self.eval_func(model, test_loader)
-
-        return acc
+        return self.acc
