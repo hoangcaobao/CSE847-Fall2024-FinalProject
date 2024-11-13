@@ -39,12 +39,20 @@ class FedAvg_solver(Solver_Base):
     
     def fedavg(self, local_models):
         global_model = local_models[0]
-
         global_state_dict = global_model.state_dict()
 
         for key in global_state_dict.keys():
-            global_state_dict[key] = torch.stack([model.state_dict()[key] for model in local_models]).mean(dim=0)
+            # Stack the tensors for the specific parameter across all local models
+            stacked_tensors = torch.stack([model.state_dict()[key] for model in local_models])
 
+            # Ensure the tensor is in floating-point type
+            if not stacked_tensors.is_floating_point():
+                stacked_tensors = stacked_tensors.float()
+
+            # Compute the mean
+            global_state_dict[key] = stacked_tensors.mean(dim=0)
+
+        # Load the averaged state_dict back into the global model
         global_model.load_state_dict(global_state_dict)
 
         return global_model
