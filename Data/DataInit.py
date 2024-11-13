@@ -104,7 +104,8 @@ def data_init(cfg_proj, cfg_m):
         
     train_labeled_datasets = random_split_dataset(train_labeled_dataset, cfg_proj.numberOfClients)
     train_unlabeled_datasets = random_split_dataset(train_unlabeled_dataset, cfg_proj.numberOfClients)
-    train_datasets = random_split_dataset(train_dataset, cfg_proj.numberOfClients)
+    if cfg_proj.dataset_name != "STL10":
+        train_datasets = random_split_dataset(train_dataset, cfg_proj.numberOfClients)
     train_labeled_loaders = []
     train_unlabeled_loaders = []
     
