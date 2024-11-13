@@ -104,39 +104,41 @@ def data_init(cfg_proj, cfg_m):
         
     train_labeled_datasets = random_split_dataset(train_labeled_dataset, cfg_proj.numberOfClients)
     train_unlabeled_datasets = random_split_dataset(train_unlabeled_dataset, cfg_proj.numberOfClients)
-
+    train_datasets = random_split_dataset(train_dataset, cfg_proj.numberOfClients)
     train_labeled_loaders = []
     train_unlabeled_loaders = []
-
-    for train_labeled_dataset in train_labeled_datasets:
-        # GOLDEN BASELINE
-        if cfg_proj.golden_baseline: 
+    
+    if cfg_proj.golden_baseline:
+        for train_dataset in train_datasets:
             train_labeled_dataset = CustomDataset(train_dataset, transform=transform_train)
             train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
-        elif cfg_proj.solver == "FixMatch_solver":
-            train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
-            train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True)
-        elif cfg_proj.solver == "MixMatch_solver":
-            train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
-            train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=True)
-        else:
-            train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
-            train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
-        train_labeled_loaders.append(train_labeled_loader)
-    
-    for train_unlabeled_dataset in train_unlabeled_datasets:
-        if cfg_proj.golden_baseline: 
-            train_unlabeled_loader = None
-        elif cfg_proj.solver == "FixMatch_solver":
-            train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformFixMatch(mean=cifar10_mean, std=cifar10_std))
-            train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=9 * cfg_m.training.batch_size, shuffle=False)
-        elif cfg_proj.solver == "MixMatch_solver":
-            train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformTwice(transform_train))            
-            train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=True)
-        else:
-            train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=transform_train)            
-            train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
-        train_unlabeled_loaders.append(train_unlabeled_loader)
+            train_labeled_loaders.append(train_labeled_loader)
+            train_unlabeled_loaders.append(None)
+
+    else:
+        for train_labeled_dataset in train_labeled_datasets:
+            if cfg_proj.solver == "FixMatch_solver":
+                train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
+                train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True)
+            elif cfg_proj.solver == "MixMatch_solver":
+                train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
+                train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=True)
+            else:
+                train_labeled_dataset = CustomDataset(train_labeled_dataset, transform=transform_train)
+                train_labeled_loader = DataLoader(dataset=train_labeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
+            train_labeled_loaders.append(train_labeled_loader)
+        
+        for train_unlabeled_dataset in train_unlabeled_datasets:
+            if cfg_proj.solver == "FixMatch_solver":
+                train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformFixMatch(mean=cifar10_mean, std=cifar10_std))
+                train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=9 * cfg_m.training.batch_size, shuffle=False)
+            elif cfg_proj.solver == "MixMatch_solver":
+                train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformTwice(transform_train))            
+                train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=True)
+            else:
+                train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=transform_train)            
+                train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=cfg_m.training.batch_size, shuffle=True, drop_last=False)
+            train_unlabeled_loaders.append(train_unlabeled_loader)
         
     # GOLDEN BASELINE
     if cfg_proj.golden_baseline: 
