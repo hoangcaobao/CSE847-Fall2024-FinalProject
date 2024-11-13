@@ -11,6 +11,7 @@ def main(cfg_proj, cfg_m):
     train_labeled_loaders, train_unlabeled_loaders, test_loader = data_init(cfg_proj, cfg_m)
 
     if len(train_unlabeled_loaders) == 1: # Normal Training
+        print("normal training")
         train_labeled_loaders = train_labeled_loaders[0]
         train_unlabeled_loaders = train_unlabeled_loaders[0]
 
@@ -30,7 +31,7 @@ if __name__ == "__main__":
     parser.add_argument("--numberOfClients", type = int, default = 1, required=False) # 1 means normal training
 
     # Standard_solver, SelfTraining_solver, FixMatch_solver, MeanTeachers_solver, MixMatch_solver
-    parser.add_argument("--solver", type = str, default = "Standard_solver", required=False) 
+    parser.add_argument("--solver", type = str, default = "FixMatch_solver", required=False) 
 
     parser.add_argument("--model", type=str, default= "resnet18", required=False) #resnet50, simpleCNN, vgg16, resnet18, densenet121
     cfg_proj = parser.parse_args()

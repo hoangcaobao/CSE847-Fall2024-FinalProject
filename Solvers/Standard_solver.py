@@ -24,8 +24,6 @@ class Standard_solver(Solver_Base):
             model = model_loader(self.cfg_proj, self.cfg_m)
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=self.cfg_m.training.lr_init)
-        
-        # import pdb; pdb.set_trace()
 
         model = self.basic_train(model, train_labeled_loader, criterion, optimizer, test_loader)
 
