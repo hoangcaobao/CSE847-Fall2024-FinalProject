@@ -63,15 +63,22 @@ class FedAvg_solver(Solver_Base):
         local_solver = local_solver_loader(self.cfg_proj, self.cfg_m)
 
         # Initialize the model, loss function, and optimizer
-        global_model = model_loader(self.cfg_proj, self.cfg_m)
-        
+        if self.cfg_proj.solver == "MeanTeachers_solver":
+            global_model = [model_loader(self.cfg_proj, self.cfg_m), model_loader(self.cfg_proj, self.cfg_m)]
+        else:
+            global_model = model_loader(self.cfg_proj, self.cfg_m)
+            
         acc_max = 0
 
         for iter in range(40):
             local_models = []
             for i in range(len(train_labeled_loader)):
                 local_models.append(local_solver.run(train_labeled_loader[i], train_unlabeled_loader[i], test_loader, model = copy.deepcopy(global_model)))
-            global_model = self.fedavg(local_models)
-            acc_max = max(self.eval_func(global_model, test_loader), acc_max)
-
+            if self.cfg_proj.solver == "MeanTeachers_solver":
+                global_model[0] = self.fedavg([local_model[0] for local_model in local_models])
+                global_model[1] = self.fedavg([local_model[1] for local_model in local_models])
+                acc_max = max(self.eval_func(global_model[0], test_loader), acc_max)
+            else:
+                global_model = self.fedavg(local_models)
+                acc_max = max(self.eval_func(global_model, test_loader), acc_max)
         return acc_max

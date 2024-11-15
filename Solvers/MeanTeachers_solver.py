@@ -33,8 +33,8 @@ class MeanTeachers_solver(Solver_Base):
             student_model = model_loader(self.cfg_proj, self.cfg_m)
 
         else:
-            teacher_model = model
-            student_model = copy.deepcopy(model)
+            teacher_model = model[0]
+            student_model = model[1]
 
         teacher_model = teacher_model.to(self.device)
         student_model = student_model.to(self.device)
@@ -93,4 +93,4 @@ class MeanTeachers_solver(Solver_Base):
 
             print(f'Epoch [{epoch+1}/{self.cfg_m.training.epochs}], Loss: {np.mean(epoch_loss):.4f}, Accuracy: {acc}')
 
-        return teacher_model
+        return [teacher_model, student_model]
