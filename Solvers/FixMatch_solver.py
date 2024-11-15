@@ -30,18 +30,18 @@ class FixMatch_solver(Solver_Base):
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader, model = None):
         if not model:
             model = model_loader(self.cfg_proj, self.cfg_m)
-        num_epochs=200
         
-        optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=5e-4)
-        # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
-        scheduler = optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.1, total_iters=num_epochs)
+        optimizer = optim.Adam(model.parameters(), lr=self.cfg_m.training.lr_init, weight_decay=5e-4)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+        # scheduler = optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.1, total_iters=num_epochs)
         ema_model = None
         
+        # import pdb; pdb.set_trace()
         best_acc = 0.0
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.to(device)
         
-        for epoch in range(num_epochs):
+        for epoch in range(self.cfg_m.training.epochs):
             model.train()
             
             labeled_iter = iter(train_labeled_loader)
@@ -51,8 +51,10 @@ class FixMatch_solver(Solver_Base):
                 try:
                     inputs_x, targets_x = next(labeled_iter)
                 except:
+                    print(batch_idx)
                     labeled_iter = iter(train_labeled_loader)
                     inputs_x, targets_x = next(labeled_iter)
+                # inputs_x, targets_x = next(labeled_iter)
                     
                 try:
                     (inputs_u_w, inputs_u_s), _ = next(unlabeled_iter)
@@ -69,6 +71,7 @@ class FixMatch_solver(Solver_Base):
                 logits = model(inputs)
                 logits_x = logits[:batch_size]
                 logits_u_w, logits_u_s = logits[batch_size:].chunk(2)
+                # logits_x = model(inputs_x)
                 
                 Lx = nn.CrossEntropyLoss()(logits_x, targets_x)
                 pseudo_label = torch.softmax(logits_u_w.detach() / 1.0, dim=-1)
@@ -78,6 +81,7 @@ class FixMatch_solver(Solver_Base):
                 Lu = (nn.CrossEntropyLoss(reduction='none')(logits_u_s, targets_u)*mask).mean()
                 
                 loss = Lx + Lu
+                # loss = Lx
                 
                 optimizer.zero_grad()
                 loss.backward()
@@ -85,6 +89,7 @@ class FixMatch_solver(Solver_Base):
                 scheduler.step()
             
             acc = self.eval_func(model, test_loader)
-            print(acc)
+            best_acc = max(best_acc, acc)
+            print(best_acc)
         
         return model

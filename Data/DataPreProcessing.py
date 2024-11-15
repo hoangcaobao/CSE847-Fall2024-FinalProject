@@ -67,15 +67,15 @@ def x_u_split(args, labels):
     return labeled_idx, unlabeled_idx
 
 class TransformFixMatch(object):
-    def __init__(self, mean, std):
+    def __init__(self, mean, std, image_size):
         self.weak = transforms.Compose([
             transforms.RandomHorizontalFlip(),
-            transforms.RandomCrop(size=64, padding=int(64 * 0.125), padding_mode='reflect')
+            transforms.RandomCrop(size=image_size, padding=int(image_size * 0.125), padding_mode='reflect')
         ])
         
         self.strong = transforms.Compose([
             transforms.RandomHorizontalFlip(),
-            transforms.RandomCrop(size=64, padding=int(64 * 0.125), padding_mode='reflect'), 
+            transforms.RandomCrop(size=image_size, padding=int(image_size * 0.125), padding_mode='reflect'), 
             RandAugmentMC(n=2, m=10)
         ])
         

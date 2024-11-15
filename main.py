@@ -11,6 +11,7 @@ def main(cfg_proj, cfg_m):
     train_labeled_loaders, train_unlabeled_loaders, test_loader = data_init(cfg_proj, cfg_m)
 
     if len(train_unlabeled_loaders) == 1: # Normal Training
+        print("normal training")
         train_labeled_loaders = train_labeled_loaders[0]
         train_unlabeled_loaders = train_unlabeled_loaders[0]
 

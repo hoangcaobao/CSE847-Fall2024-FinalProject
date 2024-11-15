@@ -33,6 +33,7 @@ def data_init(cfg_proj, cfg_m):
     cifar10_std = (0.2471, 0.2435, 0.2616)
     stl10_mean = (0.4467, 0.4398, 0.4066)
     stl10_std = (0.2243, 0.2214, 0.2236)
+    image_size = 32
     
     if cfg_proj.dataset_name == "MNIST":
         # MNIST dataset
@@ -45,10 +46,12 @@ def data_init(cfg_proj, cfg_m):
         train_dataset = datasets.CIFAR10(root='./data', train=True, transform=transform, download=True)
         test_dataset = datasets.CIFAR10(root='./data', train=False, transform=transform, download=True)
         
+        image_size = 32
+        
         transform_train = transforms.Compose([
             transforms.RandomHorizontalFlip(),
-            transforms.RandomCrop(size=32,
-                                padding=int(32*0.125),
+            transforms.RandomCrop(size=image_size,
+                                padding=int(image_size*0.125),
                                 padding_mode='reflect'),
             transforms.ToTensor(),
             transforms.Normalize(mean=cifar10_mean, std=cifar10_std)
@@ -60,16 +63,18 @@ def data_init(cfg_proj, cfg_m):
         ])
 
         train_labeled_dataset, train_unlabeled_dataset = train_test_split(train_dataset, test_size=0.9, stratify=train_dataset.targets, random_state=42)
-
+        
     elif cfg_proj.dataset_name == "STL10":
         transform = transforms.Compose([transforms.ToTensor()])
         train_labeled_dataset = datasets.STL10(root='./data', split='train', transform=transform, download=True)
         train_unlabeled_dataset = datasets.STL10(root='./data', split='unlabeled', transform=transform, download=True)
         test_dataset = datasets.STL10(root='./data', split='test', transform=transform, download=True)
         
+        image_size = 96
+        
         transform_train = transforms.Compose([
             transforms.RandomHorizontalFlip(),
-            transforms.RandomCrop(size=96, padding=int(96 * 0.125), padding_mode='reflect'),
+            transforms.RandomCrop(size=image_size, padding=int(image_size * 0.125), padding_mode='reflect'),
             transforms.ToTensor(),
             transforms.Normalize(mean=stl10_mean, std=stl10_std)
         ])
@@ -84,15 +89,16 @@ def data_init(cfg_proj, cfg_m):
         train_unlabeled_dataset = [(image, label) for image, label in train_unlabeled_dataset]
     
     elif cfg_proj.dataset_name == "Cat_and_Dog":
-        transform = transforms.Compose([transforms.ToTensor(), transforms.Resize((64, 64))])
+        image_size = 64
+        transform = transforms.Compose([transforms.ToTensor(), transforms.Resize((image_size, image_size))])
         transform_val = transforms.Compose([
-            transforms.ToTensor(),transforms.Resize((64,64)), 
+            transforms.ToTensor(),transforms.Resize((image_size,image_size)), 
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         ])
         transform_train = transforms.Compose([
-            transforms.Resize((64, 64)),
-            transforms.RandomCrop(size=64,
-                                padding=int(64*0.125),
+            transforms.Resize((image_size, image_size)),
+            transforms.RandomCrop(size=image_size,
+                                padding=int(image_size*0.125),
                                 padding_mode='reflect'),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])

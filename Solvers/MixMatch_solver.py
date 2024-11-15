@@ -31,28 +31,24 @@ class MixMatch_solver(Solver_Base):
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader, model = None):
         if not model:
             model = model_loader(self.cfg_proj, self.cfg_m)
-        optimizer = optim.SGD(model.parameters(), lr=0.002, momentum=0.9, weight_decay=5e-4)
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+            
+        optimizer = optim.Adam(model.parameters(), lr=self.cfg_m.training.lr_init, weight_decay=5e-4)
+        # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
         
-        num_epochs = 100
+        # num_epochs = 100
         best_acc = 0.0
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.to(device)
         
-        # ema_model = Conv2DModel(dim_out=self.cfg_m.data.dim_out, in_channels=self.cfg_m.data.in_channels, dataset_name=self.cfg_proj.dataset_name)
-        # for param in ema_model.parameters():
-        #     param.detach_()
-        # ema_optimizer = WeightEMA(model, ema_model, 0.999)
-        
         criterion = SemiLoss()
         
-        for epoch in range(num_epochs):
+        for epoch in range(self.cfg_m.training.epochs):
             model.train()
             
             labeled_iter = iter(train_labeled_loader)
             unlabeled_iter = iter(train_unlabeled_loader)
             
-            train_iteration = 60
+            train_iteration = 800
             
             # import pdb; pdb.set_trace()
             
@@ -71,7 +67,7 @@ class MixMatch_solver(Solver_Base):
                     (inputs_u, inputs_u2), _ = next(unlabeled_iter)
                     
                 batch_size = inputs_x.shape[0]
-                targets_x = torch.zeros(batch_size, 2, device=targets_x.device).scatter_(1, targets_x.view(-1,1).long(), 1)
+                targets_x = torch.zeros(batch_size, self.cfg_m.data.dim_out, device=targets_x.device).scatter_(1, targets_x.view(-1,1).long(), 1)
                 
                 inputs_x, targets_x = inputs_x.to(device), targets_x.to(device)
                 inputs_u, inputs_u2 = inputs_u.to(device), inputs_u2.to(device)
@@ -84,9 +80,25 @@ class MixMatch_solver(Solver_Base):
                     pt = p**(1/0.5)
                     targets_u = pt / pt.sum(dim=1, keepdim=True)
                     targets_u = targets_u.detach()
-                    
+                
+                all_inputs = torch.cat([inputs_x, inputs_u, inputs_u2], dim=0)
+                all_targets = torch.cat([targets_x, targets_u, targets_u], dim=0)
+                
+                alpha = 0.75
+                l = np.random.beta(alpha, alpha)
+                l = max(l, 1 - l)
+                
+                idx = torch.randperm(all_inputs.size(0)).to(device)
+                input_a, input_b = all_inputs, all_inputs[idx]
+                targets_a, targets_b = all_targets, all_targets[idx]
+                mixed_input = l * input_a + (1 - l) * input_b
+                mixed_target = l * targets_a + (1 - l) * targets_b
+                
+                mixed_input = list(torch.split(mixed_input, batch_size))
+                mixed_input = self.interleave(mixed_input, batch_size)
+                
                 #MixUp: combine labeled and unlabeled data using MixMatch's augmentation
-                mixed_input, mixed_target = self.mixup(inputs_x, inputs_u, inputs_u2, targets_x, targets_u, targets_u)
+                # mixed_input, mixed_target = self.mixup(inputs_x, inputs_u, inputs_u2, targets_x, targets_u, targets_u)
                 
                 # import pdb; pdb.set_trace()
                 
@@ -106,37 +118,14 @@ class MixMatch_solver(Solver_Base):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-                scheduler.step()
+                # scheduler.step()
                 # ema_optimizer.step()
                 
             acc = self.eval_func(model, test_loader)
-            print(acc)
+            best_acc = max(best_acc, acc)
+            print(best_acc)
             
         return model
-    
-    def mixup(self, inputs_x, inputs_u, inputs_u2, targets_x, targets_u, targets_u2, alpha=0.75):
-        all_inputs = torch.cat([inputs_x, inputs_u, inputs_u2], dim=0)
-        # import pdb; pdb.set_trace()
-        all_targets = torch.cat([targets_x, targets_u, targets_u2], dim=0)
-        
-        lam = np.random.beta(alpha, alpha)
-        lam = max(lam, 1-lam)
-        batch_size = inputs_x.shape[0]
-        index = torch.randperm(all_inputs.size(0)).to(inputs_x.device)
-        
-        input_a, input_b = all_inputs, all_inputs[index]
-        target_a, target_b = all_targets, all_targets[index]
-        
-        mixed_input = lam * input_a + (1 - lam) * input_b 
-        mixed_target = lam * target_a + (1 - lam) * target_b 
-        
-        mixed_input = list(torch.split(mixed_input, batch_size))
-        mixed_input = self.interleave(mixed_input, batch_size)
-        
-        
-        # import pdb; pdb.set_trace()
-        
-        return mixed_input, mixed_target  
 
     @staticmethod
     def interleave_offsets(batch, nu):
