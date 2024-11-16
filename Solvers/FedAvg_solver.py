@@ -59,7 +59,10 @@ class FedAvg_solver(Solver_Base):
 
     def run(self, train_labeled_loader, train_unlabeled_loader, test_loader):
         self.set_random_seed(self.cfg_proj.seed)
-        
+
+        if self.cfg_proj.solver == "SelfTraining_solver":
+            return self.run_selfTraining(train_labeled_loader, train_unlabeled_loader, test_loader)    
+            
         local_solver = local_solver_loader(self.cfg_proj, self.cfg_m)
 
         # Initialize the model, loss function, and optimizer
@@ -81,4 +84,25 @@ class FedAvg_solver(Solver_Base):
             else:
                 global_model = self.fedavg(local_models)
                 acc_max = max(self.eval_func(global_model, test_loader), acc_max)
+        return acc_max
+    
+    def run_selfTraining(self, train_labeled_loader, train_unlabeled_loader, test_loader):
+        local_solvers = [local_solver_loader(self.cfg_proj, self.cfg_m) for i in range(len(train_unlabeled_loader))]
+        global_model = model_loader(self.cfg_proj, self.cfg_m)
+        for i in range(len(local_solvers)):
+            local_solvers[i].run(train_labeled_loader[i], train_unlabeled_loader[i], test_loader, model = copy.deepcopy(global_model))
+        acc_max = 0
+        
+        for _ in range(10):
+            global_model = model_loader(self.cfg_proj, self.cfg_m)
+            for iter in range(40):
+                local_models = []
+                for i in range(len(local_solvers)):
+                    local_models.append(local_solvers[i].basic_train(model = copy.deepcopy(global_model), train_labeled_loader = local_solvers[i].train_labeled_loader, train_pseudo_labeled_loader = local_solvers[i].train_pseudo_labeled_loader))
+                
+                global_model = self.fedavg(local_models)
+                acc_max = max(self.eval_func(global_model, test_loader), acc_max)
+                
+            for i in range(len(local_solvers)):
+                local_solvers[i].add_pseudo(copy.deepcopy(global_model))
         return acc_max

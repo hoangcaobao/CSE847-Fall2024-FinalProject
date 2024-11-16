@@ -16,7 +16,7 @@ class SelfTraining_solver(Solver_Base):
     def __init__(self, cfg_proj, cfg_m, name = "Std"):
         Solver_Base.__init__(self, cfg_proj, cfg_m, name)
         
-    def run(self, train_labeled_loader, train_unlabeled_loader, test_loader):
+    def run(self, train_labeled_loader, train_unlabeled_loader, test_loader, model = None):
         self.set_random_seed(self.cfg_proj.seed)
         
         if self.cfg_proj.dataset_name == "CIFAR10":
@@ -59,10 +59,19 @@ class SelfTraining_solver(Solver_Base):
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
             ])
-        # Initialize the model, loss function, and optimizer
-        model = self.train(train_labeled_loader, train_unlabeled_loader, test_loader)
 
-        return self.acc
+        # Centralized
+        # Initialize the model, loss function, and optimizer
+        if not model:
+            model = self.train(train_labeled_loader, train_unlabeled_loader, test_loader)
+            return self.acc
+
+        # Decentralized
+        self.unlabeled_imgs = [item[0] for item in train_unlabeled_loader.dataset.dataset[:]]
+        self.unlabeled_imgs = torch.stack(self.unlabeled_imgs)
+        self.pseudo_imgs = []
+        self.pseudo_labels = []
+        self.train_pseudo_labeled_loader = None
 
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader):
         unlabeled_imgs = [item[0] for item in train_unlabeled_loader.dataset.dataset[:]]
@@ -75,12 +84,9 @@ class SelfTraining_solver(Solver_Base):
         
         for _ in range(10):
             model = model_loader(self.cfg_proj, self.cfg_m)
-            criterion = nn.CrossEntropyLoss()
-            optimizer = optim.Adam(model.parameters(), lr=self.cfg_m.training.lr_init)
-
             model.train()
 
-            model = self.basic_train(model, train_labeled_loader, train_pseudo_labeled_loader, criterion, optimizer)
+            model = self.basic_train(model, train_labeled_loader, train_pseudo_labeled_loader)
 
             model.eval()
 
@@ -122,7 +128,41 @@ class SelfTraining_solver(Solver_Base):
 
         return model
 
-    def basic_train(self, model, train_labeled_loader, train_pseudo_labeled_loader, criterion, optimizer):
+    def add_pseudo(self, model):
+        model.eval()
+
+        if len(self.unlabeled_imgs) == 0:
+            return
+            
+        self.train_unlabeled_loader = DataLoader(dataset=CustomDatasetSelfTraining(self.unlabeled_imgs, transform=self.transform_val), batch_size=self.cfg_m.training.batch_size, shuffle=True, drop_last=False)
+        self.unlabeled_imgs = []
+
+        if len(self.pseudo_imgs):
+            self.pseudo_imgs = [self.pseudo_imgs]
+            self.pseudo_labels = [self.pseudo_labels]
+
+        with torch.no_grad():
+            for original_images, images in self.train_unlabeled_loader:
+                outputs = model(images.to(self.device))
+                outputs = torch.nn.functional.softmax(outputs, dim = 1).detach().cpu()
+                outputs, labels = torch.max(outputs.data, 1)
+                
+                # choose most confidence one
+                index = outputs >= 0.8
+                self.pseudo_imgs.append(original_images[index])
+                self.pseudo_labels.append(labels[index])
+
+                self.unlabeled_imgs.append(original_images[~index])
+            
+        self.pseudo_imgs = torch.cat(self.pseudo_imgs, dim = 0)
+        self.pseudo_labels = torch.cat(self.pseudo_labels, dim = 0)    
+        self.unlabeled_imgs = torch.cat(self.unlabeled_imgs, dim = 0)
+        self.train_pseudo_labeled_loader =  DataLoader(dataset=CustomDataset(TensorDataset(self.pseudo_imgs, self.pseudo_labels), transform=self.transform_train), batch_size=self.cfg_m.training.batch_size, shuffle=True, drop_last=False)
+    
+    def basic_train(self, model, train_labeled_loader, train_pseudo_labeled_loader):
+        
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.Adam(model.parameters(), lr=self.cfg_m.training.lr_init)
         
         model = model.to(self.device)
         # Training loop with validation
