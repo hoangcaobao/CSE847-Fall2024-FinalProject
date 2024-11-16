@@ -72,6 +72,7 @@ class SelfTraining_solver(Solver_Base):
         self.pseudo_imgs = []
         self.pseudo_labels = []
         self.train_pseudo_labeled_loader = None
+        self.train_labeled_loader = train_labeled_loader
 
     def train(self, train_labeled_loader, train_unlabeled_loader, test_loader):
         unlabeled_imgs = [item[0] for item in train_unlabeled_loader.dataset.dataset[:]]
