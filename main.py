@@ -31,9 +31,9 @@ if __name__ == "__main__":
     parser.add_argument("--numberOfClients", type = int, default = 5, required=False) # 1 means normal training
 
     # Standard_solver, SelfTraining_solver, FixMatch_solver, MeanTeachers_solver, MixMatch_solver
-    parser.add_argument("--solver", type = str, default = "MeanTeachers_solver", required=False) 
+    parser.add_argument("--solver", type = str, default = "SelfTraining_solver", required=False) 
 
-    parser.add_argument("--model", type=str, default= "resnet18", required=False) #resnet50, simpleCNN, vgg16, resnet18, densenet121
+    parser.add_argument("--model", type=str, default= "simpleCNN", required=False) #resnet50, simpleCNN, vgg16, resnet18, densenet121
     cfg_proj = parser.parse_args()
     cfg_m = init_cfg(cfg_proj)
     os.environ["CUDA_VISIBLE_DEVICES"] = "%s"%(cfg_proj.gpu)

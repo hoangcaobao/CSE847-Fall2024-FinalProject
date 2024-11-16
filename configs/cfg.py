@@ -26,5 +26,6 @@ def init_cfg(cfg_proj):
     
     if cfg_proj.numberOfClients > 1:
         config.training.epochs = 5
+        config.training.globalEpochs = 40
 
     return config

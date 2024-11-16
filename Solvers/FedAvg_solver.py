@@ -73,7 +73,7 @@ class FedAvg_solver(Solver_Base):
             
         acc_max = 0
 
-        for iter in range(40):
+        for iter in range(self.cfg_m.training.globalEpochs):
             local_models = []
             for i in range(len(train_labeled_loader)):
                 local_models.append(local_solver.run(train_labeled_loader[i], train_unlabeled_loader[i], test_loader, model = copy.deepcopy(global_model)))
@@ -95,7 +95,7 @@ class FedAvg_solver(Solver_Base):
         
         for _ in range(10):
             global_model = model_loader(self.cfg_proj, self.cfg_m)
-            for iter in range(40):
+            for iter in range(self.cfg_m.training.globalEpochs):
                 local_models = []
                 for i in range(len(local_solvers)):
                     local_models.append(local_solvers[i].basic_train(model = copy.deepcopy(global_model), train_labeled_loader = local_solvers[i].train_labeled_loader, train_pseudo_labeled_loader = local_solvers[i].train_pseudo_labeled_loader))
