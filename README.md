@@ -20,8 +20,8 @@ You can change the arguments from `main.py` to try different settings.
   - Specifies the dataset. 
   - Options include: `"STL10"`, `"CIFAR10"`, and `"Cat_and_Dog"`.
     
-- `--dataset_name` (string, optional, default: `"Cat_and_Dog"`): 
-  - Specifies the dataset. 
-  - Options include: `"STL10"`, `"CIFAR10"`, and `"Cat_and_Dog"`.
+- `--golden_baseline` (flag, optional, default: `False`): 
+  - Specifies the golden baseline which uses all labeled training data. 
+  - Options include: `False` and `True`.
  
   
