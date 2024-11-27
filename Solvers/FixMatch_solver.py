@@ -32,7 +32,7 @@ class FixMatch_solver(Solver_Base):
             model = model_loader(self.cfg_proj, self.cfg_m)
         
         optimizer = optim.Adam(model.parameters(), lr=self.cfg_m.training.lr_init, weight_decay=5e-4)
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+        # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
         # scheduler = optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, end_factor=0.1, total_iters=num_epochs)
         ema_model = None
         
@@ -41,7 +41,7 @@ class FixMatch_solver(Solver_Base):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.to(device)
         
-        for epoch in range(self.cfg_m.training.epochs):
+        for epoch in range(5):
             model.train()
             
             labeled_iter = iter(train_labeled_loader)
@@ -66,7 +66,6 @@ class FixMatch_solver(Solver_Base):
                 inputs_u_w, inputs_u_s = inputs_u_w.to(device), inputs_u_s.to(device)
                 
                 batch_size = inputs_x.shape[0]
-                # import pdb; pdb.set_trace()
                 inputs = torch.cat([inputs_x, inputs_u_w, inputs_u_s], dim=0)
                 logits = model(inputs)
                 logits_x = logits[:batch_size]
@@ -86,10 +85,10 @@ class FixMatch_solver(Solver_Base):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-                scheduler.step()
+                # scheduler.step()
             
             acc = self.eval_func(model, test_loader)
             best_acc = max(best_acc, acc)
-            print(best_acc)
+            # print(best_acc)
         
         return model

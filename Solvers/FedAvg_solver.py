@@ -16,6 +16,10 @@ import torch.optim as optim
 
 import copy 
 
+import torch.distributed as dist
+import torch.multiprocessing as mp 
+from torch.nn.parallel import DistributedDataParallel as DDP
+
 def local_solver_loader(cfg_proj, cfg_m):
     s = None
     

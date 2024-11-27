@@ -70,9 +70,10 @@ def data_init(cfg_proj, cfg_m):
         train_unlabeled_dataset = datasets.STL10(root='./data', split='unlabeled', transform=transform, download=True)
         test_dataset = datasets.STL10(root='./data', split='test', transform=transform, download=True)
         
-        image_size = 96
+        image_size = 64
         
         transform_train = transforms.Compose([
+            transforms.Resize((image_size, image_size)),
             transforms.RandomHorizontalFlip(),
             transforms.RandomCrop(size=image_size, padding=int(image_size * 0.125), padding_mode='reflect'),
             transforms.ToTensor(),
@@ -81,6 +82,7 @@ def data_init(cfg_proj, cfg_m):
 
         transform_val = transforms.Compose([
             transforms.ToTensor(),
+            transforms.Resize((image_size, image_size)),
             transforms.Normalize(mean=stl10_mean, std=stl10_std)
         ])
 
@@ -137,7 +139,7 @@ def data_init(cfg_proj, cfg_m):
         
         for train_unlabeled_dataset in train_unlabeled_datasets:
             if cfg_proj.solver == "FixMatch_solver":
-                train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformFixMatch(mean=cifar10_mean, std=cifar10_std))
+                train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformFixMatch(mean=cifar10_mean, std=cifar10_std, image_size=image_size))
                 train_unlabeled_loader = DataLoader(dataset=train_unlabeled_dataset, batch_size=9 * cfg_m.training.batch_size, shuffle=False)
             elif cfg_proj.solver == "MixMatch_solver":
                 train_unlabeled_dataset = CustomDataset(train_unlabeled_dataset, transform=TransformTwice(transform_train))            

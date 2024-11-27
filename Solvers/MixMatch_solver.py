@@ -48,9 +48,7 @@ class MixMatch_solver(Solver_Base):
             labeled_iter = iter(train_labeled_loader)
             unlabeled_iter = iter(train_unlabeled_loader)
             
-            train_iteration = 800
-            
-            # import pdb; pdb.set_trace()
+            train_iteration = len(train_unlabeled_loader) + 50
             
             for batch_idx in tqdm(range(train_iteration)):
                 
@@ -97,10 +95,6 @@ class MixMatch_solver(Solver_Base):
                 mixed_input = list(torch.split(mixed_input, batch_size))
                 mixed_input = self.interleave(mixed_input, batch_size)
                 
-                #MixUp: combine labeled and unlabeled data using MixMatch's augmentation
-                # mixed_input, mixed_target = self.mixup(inputs_x, inputs_u, inputs_u2, targets_x, targets_u, targets_u)
-                
-                # import pdb; pdb.set_trace()
                 
                 #Forward pass
                 logits = [model(mixed_input[0])]
@@ -119,11 +113,10 @@ class MixMatch_solver(Solver_Base):
                 loss.backward()
                 optimizer.step()
                 # scheduler.step()
-                # ema_optimizer.step()
                 
             acc = self.eval_func(model, test_loader)
             best_acc = max(best_acc, acc)
-            print(best_acc)
+            # print(best_acc)
             
         return model
 
