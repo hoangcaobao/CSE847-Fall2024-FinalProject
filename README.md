@@ -21,7 +21,23 @@ You can change the arguments from `main.py` to try different settings.
   - Options include: `"STL10"`, `"CIFAR10"`, and `"Cat_and_Dog"`.
     
 - `--golden_baseline` (flag, optional, default: `False`): 
-  - Specifies the golden baseline which uses all labeled training data. 
+  - If set, then evaluate the golden baseline which uses all labeled training data. 
   - Options include: `False` and `True`.
+  
+- `--numberOfClients` (int, optional, default: `5`): 
+  - Specifies the number of clients in federated learning (set to 1 means centralized setting).
+
+- `--solver` (string, optional, default = `"SelfTraining_solver"`):
+  - Specifies semi-supervised algorithms.
+  - Options include: `"Standard_solver"`, `"SelfTraining_solver"`, `"FixMatch_solver"`, `"MeanTeachers_solver"`, and `"MixMatch_solver"`
+ 
+- `--model` (string, optional, default = `"simpleCNN"`):
+  - Specifies computer vision models.
+  - Options include: `"simpleCNN"`, `"resnet18"`, `"densenet121"`
+ 
+### Example
+Run FixMatch algorithm for CIFAR10 using resnet 18 model: ```python main.py --model resnet18 --dataset_name CIFAR10```
+
+  
  
   
