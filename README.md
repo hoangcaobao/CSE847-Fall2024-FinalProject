@@ -39,6 +39,7 @@ You can change the arguments from `main.py` to try different settings.
 ### Example
 Run FixMatch algorithm for CIFAR10 using ResNet-18 model: ```python main.py --model resnet18 --dataset_name CIFAR10```
 
+## Find Project Report and Presentation Slides on Report.pdf and Presentation.pdf
   
  
   
